@@ -15,9 +15,15 @@
  */
 package com.stratio.qa.aspects;
 
+import gherkin.formatter.model.Comment;
+import gherkin.formatter.model.Tag;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class RunOnEnvTagAspectTest {
 
@@ -39,5 +45,15 @@ public class RunOnEnvTagAspectTest {
     public void testCheckParams_2() throws Exception {
         System.setProperty("HELLO_KO","KO");
         assertThat(false).as("Params are correctly checked 2").isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(HELLO_KO,BYE_KO)")));
+    }
+    @Test
+    public void testCheckEmptyParams() throws Exception {
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv()")))
+                .withMessage("Error while parsing params. Params must be at least one");
+    }
+    @Test
+    public void testGetEmptyParams() throws Exception {
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.getParams("@runOnEnv"))
+                .withMessage("Error while parsing params. Format is: \"runOnEnv(PARAM)\", but found: " + "@runOnEnv");
     }
 }

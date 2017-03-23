@@ -26,6 +26,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.tree.ExpandVetoException;
 import java.util.List;
 
 @Aspect
@@ -103,19 +104,20 @@ public class RunOnTagAspect {
     * Returns a string array of params
     */
     public String[] getParams(String s) throws Exception {
-        String[] vals;
-        if (s.isEmpty()){
-            throw new Exception("-> Error while parsing params. Params must be at least one");
-        } else {
-            vals = s.substring((s.lastIndexOf("(") + 1), (s.length()) - 1).split(",");
+        String[] val = s.substring((s.lastIndexOf("(") + 1), (s.length()) - 1).split(",");
+        if(val[0].startsWith("@")) {
+            throw new Exception("Error while parsing params. Format is: \"runOnEnv(PARAM)\", but found: " + s);
         }
-        return vals;
+        return val;
     }
 
    /*
     * Checks if every param in the array of strings is defined
     */
-    public boolean checkParams(String[] params) {
+    public boolean checkParams(String[] params) throws Exception {
+        if ("".equals(params[0])) {
+            throw new Exception("Error while parsing params. Params must be at least one");
+        }
         for(int i = 0; i < params.length; i++) {
             if (System.getProperty(params[i], "").isEmpty()){
                 return false;
