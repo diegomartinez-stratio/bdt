@@ -16,14 +16,22 @@
 package com.stratio.qa.specs;
 
 import com.stratio.qa.cucumber.testng.CucumberRunner;
-import com.stratio.qa.utils.BaseGTest;
+import com.stratio.qa.data.BrowsersDataProvider;
+
+import com.stratio.qa.utils.BaseTest;
 import cucumber.api.CucumberOptions;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @CucumberOptions(features = {"src/test/resources/features/seleniumIT.feature"})
-public class HookGIT extends BaseGTest {
+public class HookGIT extends BaseTest {
 
-    @Test
+    @Factory(enabled = false, dataProviderClass = BrowsersDataProvider.class, dataProvider = "availableUniqueBrowsers")
+    public HookGIT(String browser) {
+        this.browser = browser;
+    }
+
+    @Test(enabled = true)
     public void seleniumTest() throws Exception {
         new CucumberRunner(this.getClass()).runCukes();
     }
