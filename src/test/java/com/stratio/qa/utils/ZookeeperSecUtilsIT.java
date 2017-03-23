@@ -80,7 +80,9 @@ public class ZookeeperSecUtilsIT extends BaseGSpec {
     @Test
     public void zookeeperSecConnectionTest() throws Exception {
         System.setProperty("SECURIZED_ZOOKEEPER", "true");
-        ZookeeperSecUtils zkUtils = new ZookeeperSecUtils();
+        String zk_hosts = System.getProperty("ZOOKEEPER_HOSTS", "localhost");
+        int timeout = Integer.parseInt(System.getProperty("ZOOKEEPER_SESSION_TIMEOUT", "1"));
+        ZookeeperSecUtils zkUtils = new ZookeeperSecUtils(zk_hosts, timeout);
 
         // Connect
         zkUtils.connectZk();
