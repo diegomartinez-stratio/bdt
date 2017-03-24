@@ -11,3 +11,7 @@ Feature: Selenium run test
     Then I type 'stratio' on the element on index '0'
     Then I send 'ENTER' on the element on index '0'
     And I wait '1' seconds
+
+
+  Scenario: Given steps test
+
