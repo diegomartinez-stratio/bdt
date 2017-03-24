@@ -22,12 +22,12 @@ import cucumber.api.CucumberOptions;
 import org.testng.annotations.Test;
 
 @CucumberOptions(features = {
-        "src/test/resources/features/cassandraSteps.feature"
+        "src/test/resources/features/mongoSteps.feature"
 })
-public class CassandraStepsIT extends BaseGTest {
+public class MongoStepsIT extends BaseGTest {
 
     @Test
-    public void cassandraStepsTest() throws Exception {
+    public void mongoStepsTest() throws Exception {
         new CucumberRunner(this.getClass()).runCukes();
     }
 }
