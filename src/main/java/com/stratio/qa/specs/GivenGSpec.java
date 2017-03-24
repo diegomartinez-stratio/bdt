@@ -243,11 +243,7 @@ public class GivenGSpec extends BaseGSpec {
 
         String value = commonspec.getJSONPathString(json, parsedElement, position);
 
-        if (value == null) {
-            throw new Exception("Element to be saved: " + element + " is null");
-        } else {
-            ThreadProperty.set(envVar, value);
-        }
+        ThreadProperty.set(envVar, value);
     }
 
 
@@ -256,15 +252,10 @@ public class GivenGSpec extends BaseGSpec {
      *
      * @param value  value to be saved
      * @param envVar thread environment variable where to store the value
-     * @throws Exception
      */
     @Given("^I save \'(.+?)\' in variable \'(.+?)\'$")
-    public void saveInEnvironment(String value, String envVar) throws Exception {
-        if (envVar.isEmpty()) {
-            throw new Exception("Environment variable must be specified!");
-        } else {
-            ThreadProperty.set(envVar, value);
-        }
+    public void saveInEnvironment(String value, String envVar) {
+        ThreadProperty.set(envVar, value);
     }
 
 
@@ -431,7 +422,6 @@ public class GivenGSpec extends BaseGSpec {
     @Given("^My app is running in '([^:]+?)(:.+?)?'$")
     public void setupApp(String host, String port) {
         assertThat(host).isNotEmpty();
-        assertThat(port).isNotEmpty();
 
         if (port == null) {
             port = ":80";
@@ -441,27 +431,6 @@ public class GivenGSpec extends BaseGSpec {
         commonspec.setWebPort(port);
         commonspec.setRestHost(host);
         commonspec.setRestPort(port);
-    }
-
-
-    /**
-     * Browse to {@code webHost, @code webPort} using the current browser.
-     *
-     * @param webHost
-     * @param webPort
-     * @throws MalformedURLException
-     */
-    @Given("^I set web base url to '([^:]+?)(:.+?)?'$")
-    public void setupWeb(String webHost, String webPort) throws MalformedURLException {
-        assertThat(webHost).isNotEmpty();
-        assertThat(webPort).isNotEmpty();
-
-        if (webPort == null) {
-            webPort = ":80";
-        }
-
-        commonspec.setWebHost(webHost);
-        commonspec.setWebPort(webPort);
     }
 
     /**
@@ -496,7 +465,7 @@ public class GivenGSpec extends BaseGSpec {
      * Maximizes current browser window. Mind the current resolution could break a test.
      */
     @Given("^I maximize the browser$")
-    public void seleniumMaximize(String url) {
+    public void seleniumMaximize() {
         commonspec.getDriver().manage().window().maximize();
     }
 

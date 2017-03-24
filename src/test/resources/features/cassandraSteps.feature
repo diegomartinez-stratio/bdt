@@ -15,6 +15,16 @@ Feature: Cassandra steps test
     Then a Cassandra keyspace 'cassandrakeyspace' contains a table 'tabletest'
     And a Cassandra keyspace 'cassandrakeyspace' contains a table 'tabletest' with '0' rows
 
+  Scenario: Create a table with null PK in Cassandra
+    Given I create a Cassandra table named 'tabletest_nopk' using keyspace 'cassandrakeyspace' with:
+      | description     | location  |
+      | UUID            | text      |
+
+  Scenario: Exception captured when insert value in cassandra
+    Given I insert in keyspace 'cassandrakeyspace' and table 'tabletest' with:
+      | description     | location  |
+      | UUID            | text      |
+
   Scenario: Querying table in Cassandra
     When a Cassandra keyspace 'cassandrakeyspace' contains a table 'tabletest' with values:
       |  description-uuid |
