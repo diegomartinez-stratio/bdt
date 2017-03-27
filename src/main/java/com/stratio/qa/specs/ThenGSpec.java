@@ -259,18 +259,6 @@ public class ThenGSpec extends BaseGSpec {
         assertThat(this.commonspec, commonspec.getDriver()).as("Expected text not found at page").contains(text);
     }
 
-    /**
-     * Verifies that a webelement previously found has {@code text} as text
-     *
-     * @param index
-     * @param text
-     */
-    @Then("^the element on index '(\\d+?)' has this text:$")
-    public void assertSeleniumTextOnElementPresent(Integer index, String text) {
-        assertThat(commonspec.getPreviousWebElements()).as("There are less found elements than required")
-                .hasAtLeast(index);
-        assertThat(commonspec.getPreviousWebElements().getPreviousWebElements().get(index)).contains(text);
-    }
 
     /**
      * Checks if {@code expectedCount} webelements are found, with a location {@code method}.

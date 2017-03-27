@@ -728,16 +728,13 @@ public class GivenGSpec extends BaseGSpec {
      * Connect to Kafka.
      *
      * @param zkHost
-     * @param zkPort
      * @param zkPath
      */
-    @Given("^I connect to kafka at '(.+)':'(.+)' using path '(.+)'$")
-    public void connectKafka(String zkHost, String zkPort, String zkPath) throws UnknownHostException {
-        if (System.getenv("DCOS_CLUSTER") != null) {
-            commonspec.getKafkaUtils().setZkHost(zkHost, zkPort, zkPath);
-        } else {
-            commonspec.getKafkaUtils().setZkHost(zkHost, zkPort, "dcos-service-" + zkPath);
-        }
+    @Given("^I connect to kafka at '(.+)' using path '(.+)'$")
+    public void connectKafka(String zkHost, String zkPath) throws UnknownHostException {
+        String zkPort = zkHost.split(":")[1];
+        zkHost = zkHost.split(":")[0];
+        commonspec.getKafkaUtils().setZkHost(zkHost, zkPort, zkPath);
         commonspec.getKafkaUtils().connect();
     }
 }

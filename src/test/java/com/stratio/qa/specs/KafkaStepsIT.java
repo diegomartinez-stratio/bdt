@@ -16,23 +16,16 @@
 package com.stratio.qa.specs;
 
 import com.stratio.qa.cucumber.testng.CucumberRunner;
-import com.stratio.qa.data.BrowsersDataProvider;
 
 import com.stratio.qa.utils.BaseTest;
 import cucumber.api.CucumberOptions;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-@CucumberOptions(features = {"src/test/resources/features/selenium.feature"})
-public class HookGIT extends BaseTest {
+@CucumberOptions(features = {"src/test/resources/features/kafkaSteps.feature"})
+public class KafkaStepsIT extends BaseTest {
 
-    @Factory(enabled = false, dataProviderClass = BrowsersDataProvider.class, dataProvider = "availableUniqueBrowsers")
-    public HookGIT(String browser) {
-        this.browser = browser;
-    }
-
-    @Test(enabled = true)
-    public void seleniumTest() throws Exception {
+    @Test
+    public void kafkaStepsTest() throws Exception {
         new CucumberRunner(this.getClass()).runCukes();
     }
 }
