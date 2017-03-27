@@ -50,11 +50,6 @@ Feature: Cassandra steps test
       | __minDist    | UPDATE  | -100km     |
     Then an exception 'IS' thrown with class 'Exception' and message like 'InvalidQueryException'
 
-  Scenario: Exception captured when insert value in cassandra
-    Given I insert in keyspace 'cassandrakeyspace' and table 'tabletest' with:
-      | description     | location  |
-      | UUID            | text      |
-
   Scenario: Truncate table in Cassandra
     Given I truncate a Cassandra table named 'analyzertable' using keyspace 'opera'
 
