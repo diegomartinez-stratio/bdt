@@ -59,6 +59,14 @@ public class HookGSpec extends BaseGSpec {
         this.commonspec = spec;
     }
 
+    /**
+     * Clean the exception list.
+     */
+    @Before(order = 0)
+    public void globalSetup() {
+        commonspec.getExceptions().clear();
+    }
+
 
     /**
      * Connect to selenium.
