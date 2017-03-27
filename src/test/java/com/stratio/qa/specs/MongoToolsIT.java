@@ -18,9 +18,12 @@ package com.stratio.qa.specs;
 
 import com.stratio.qa.exceptions.DBException;
 import com.stratio.qa.utils.ThreadProperty;
+import cucumber.api.DataTable;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

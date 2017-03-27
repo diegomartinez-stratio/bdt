@@ -319,17 +319,6 @@ public class GivenGSpec extends BaseGSpec {
     }
 
     /**
-     * Execute a cql file over a Cassandra keyspace.
-     *
-     * @param filename
-     * @param keyspace
-     */
-    @Given("I load a Cassandra script with name '(.+?)' into the keyspace '(.+?)'$")
-    public void insertDataOnCassandraFromFile(String filename, String keyspace) {
-        commonspec.getCassandraClient().loadTestData(keyspace, "/scripts/" + filename);
-    }
-
-    /**
      * Drop a Cassandra Keyspace.
      *
      * @param keyspace
