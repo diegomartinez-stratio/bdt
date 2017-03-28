@@ -15,45 +15,90 @@
  */
 package com.stratio.qa.aspects;
 
-import gherkin.formatter.model.Comment;
-import gherkin.formatter.model.Tag;
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class IgnoreTagAspectTest {
 
-    public RunOnTagAspect runontag = new RunOnTagAspect();
+    public IgnoreTagAspect ignoretag = new IgnoreTagAspect();
 
     @Test
-    public void testGetParams() throws Exception {
-        String[] expectedResponse = {"HELLO", "BYE"};
-        assertThat(expectedResponse).as("Params are correctly obtained").isEqualTo(runontag.getParams("@runOnEnv(HELLO,BYE)"));
+    public void testJiraTicket() throws Exception {
+        List<String> tagList = new ArrayList<>();
+        tagList.add(0, "@ignore");
+        tagList.add(1, "@tillfixed(XXX-123)");
+        String scnName = "Jira ticket ignore";
+        IgnoreTagAspect.ignoreReasons exit = IgnoreTagAspect.ignoreReasons.JIRATICKET;
+
+        assertThat(exit).as("Scenario 'Jira ticket ignore' ignored because of ticket: XXX-123").isEqualTo(ignoretag.manageTags(tagList,scnName));
     }
 
     @Test
-    public void testCheckParams() throws Exception {
-        System.setProperty("HELLO_OK","OK");
-        assertThat(true).as("Params are correctly checked").isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(HELLO_OK)")));
+    public void testManual() throws Exception {
+        List<String> tagList = new ArrayList<>();
+        tagList.add(0, "@ignore");
+        tagList.add(1, "@manual");
+        String scnName = "Manual ignore";
+        IgnoreTagAspect.ignoreReasons exit = IgnoreTagAspect.ignoreReasons.MANUAL;
+
+        assertThat(exit).as("Scenario 'Manual ignore' ignored because it is marked as manual test.").isEqualTo(ignoretag.manageTags(tagList,scnName));
     }
 
     @Test
-    public void testCheckParams_2() throws Exception {
-        System.setProperty("HELLO_KO","KO");
-        assertThat(false).as("Params are correctly checked 2").isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(HELLO_KO,BYE_KO)")));
+    public void testTooComplex() throws Exception {
+        List<String> tagList = new ArrayList<>();
+        tagList.add(0, "@ignore");
+        tagList.add(1, "@toocomplex");
+        String scnName = "Too complex ignore";
+        IgnoreTagAspect.ignoreReasons exit = IgnoreTagAspect.ignoreReasons.TOOCOMPLEX;
+
+        assertThat(exit).as("Scenario 'Too complex ignore' ignored because the test is too complex.").isEqualTo(ignoretag.manageTags(tagList,scnName));
     }
+
     @Test
-    public void testCheckEmptyParams() throws Exception {
-        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv()")))
-                .withMessage("Error while parsing params. Params must be at least one");
+    public void testRunOnEnvs() throws Exception {
+        List<String> tagList = new ArrayList<>();
+        tagList.add(0, "@ignore");
+        tagList.add(1, "@envCondition");
+        String scnName = "Condition ignore";
+        IgnoreTagAspect.ignoreReasons exit = IgnoreTagAspect.ignoreReasons.ENVCONDITION;
+
+        assertThat(exit).isEqualTo(ignoretag.manageTags(tagList,scnName));
     }
+
     @Test
-    public void testGetEmptyParams() throws Exception {
-        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.getParams("@runOnEnv"))
-                .withMessage("Error while parsing params. Format is: \"runOnEnv(PARAM)\", but found: " + "@runOnEnv");
+    public void testUnimplemented() throws Exception {
+        List<String> tagList = new ArrayList<>();
+        tagList.add(0, "@ignore");
+        tagList.add(1, "@unimplemented");
+        String scnName = "Unimplemented ignore";
+        IgnoreTagAspect.ignoreReasons exit = IgnoreTagAspect.ignoreReasons.UNIMPLEMENTED;
+
+        assertThat(exit).as("Scenario 'Unimplemented ignore' ignored because it is not yet implemented.").isEqualTo(ignoretag.manageTags(tagList,scnName));
+    }
+
+    @Test
+    public void testNotKnownReason() throws Exception {
+        List<String> tagList = new ArrayList<>();
+        tagList.add(0, "@ignore");
+        tagList.add(1, "@hellomyfriend");
+        String scnName = "Not known reason ignore";
+        IgnoreTagAspect.ignoreReasons exit = IgnoreTagAspect.ignoreReasons.NOREASON;
+
+        assertThat(exit).as("Scenario 'test ignore in scenario' ignored because of ticket: XXX-123").isEqualTo(ignoretag.manageTags(tagList,scnName));
+    }
+
+    @Test
+    public void testNotIgnored() throws Exception {
+        List<String> tagList = new ArrayList<>();
+        tagList.add(0, "@hellomyfriend");
+        String scnName = "Not ignored scenario";
+        IgnoreTagAspect.ignoreReasons exit = null;
+
+        assertThat(exit).as("Scenario 'test ignore in scenario' ignored because of ticket: XXX-123").isEqualTo(ignoretag.manageTags(tagList,scnName));
     }
 }
