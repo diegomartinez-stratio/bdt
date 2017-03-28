@@ -957,7 +957,7 @@ public class CommonG {
      * Eliminates null occurrences, replacing them with "TO_BE_NULL"
      *
      * @param object JsonObject containing json where to replace null ocurrences
-     * @return
+     * @return JsonObject
      */
     public JsonObject removeNulls(JsonObject object){
         for(int j = 0; j < object.names().size(); j++){

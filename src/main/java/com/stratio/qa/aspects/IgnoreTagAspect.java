@@ -76,7 +76,7 @@ public class IgnoreTagAspect {
             logger.error("Scenario '" + scenario.getName() + "' failed due to wrong use of the @ignore tag. ");
         }
 
-        if ((!exitReason.equals(null)) || (!(exitReason.equals(NOREASON)))) {
+        if ((!exitReason.equals(NOTIGNORED)) || (!(exitReason.equals(NOREASON)))) {
             runtime.buildBackendWorlds(reporter, tags, scenario.getName());
             formatter.startOfScenarioLifeCycle(scenario);
             formatter.endOfScenarioLifeCycle(scenario);
@@ -87,8 +87,7 @@ public class IgnoreTagAspect {
     }
 
     public ignoreReasons manageTags(List<String> tagList, String scenarioName) {
-        ignoreReasons exit = null;
-
+        ignoreReasons exit = NOTIGNORED;
         if (tagList.contains("@ignore")) {
             exit = ignoreReasons.NOREASON;
             for (String tag: tagList) {
@@ -119,5 +118,5 @@ public class IgnoreTagAspect {
         return exit;
     }
 
-    public enum ignoreReasons { ENVCONDITION, UNIMPLEMENTED, MANUAL, TOOCOMPLEX, JIRATICKET, NOREASON}
+    public enum ignoreReasons { NOTIGNORED, ENVCONDITION, UNIMPLEMENTED, MANUAL, TOOCOMPLEX, JIRATICKET, NOREASON }
 }

@@ -97,7 +97,7 @@ public class IgnoreTagAspectTest {
         List<String> tagList = new ArrayList<>();
         tagList.add(0, "@hellomyfriend");
         String scnName = "Not ignored scenario";
-        IgnoreTagAspect.ignoreReasons exit = null;
+        IgnoreTagAspect.ignoreReasons exit = IgnoreTagAspect.ignoreReasons.NOTIGNORED;
 
         assertThat(exit).as("Scenario not ignored.").isEqualTo(ignoretag.manageTags(tagList,scnName));
     }
