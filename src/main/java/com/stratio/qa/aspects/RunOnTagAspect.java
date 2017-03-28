@@ -25,6 +25,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.util.parsing.combinator.testing.Str;
 
 import javax.swing.tree.ExpandVetoException;
 import java.util.List;
@@ -78,26 +79,31 @@ public class RunOnTagAspect {
     public void aroundAddRunOnTagPointcut(ProceedingJoinPoint pjp, List<Comment> comments, List<Tag> tags,
                                                   String keyword, String name, String description, Integer line, String id) throws Throwable {
 
+        Scenario linescn = (Scenario) pjp.getTarget();
+        Boolean exit = tagsIteration(tags, line);
 
+        if (exit) {
+            ThreadProperty.set("skippedOnParams" + pjp.getArgs()[3].toString() + linescn.getLine(), "true");
+        }
+    }
+
+    public boolean tagsIteration(List<Tag> tags, Integer line) throws Exception {
         for (Tag tag : tags) {
             if (tag.getName().contains("@runOnEnv")) {
                 if (!checkParams(getParams(tag.getName()))) {
                     tags.add(new Tag("@ignore", line));
                     tags.add(new Tag("@envCondition", line));
-                    Scenario linescn = (Scenario) pjp.getTarget();
-                    ThreadProperty.set("skippedOnParams" + pjp.getArgs()[3].toString() + linescn.getLine(), "true");
-                    break;
+                    return true;
                 }
             } else if (tag.getName().contains("@skipOnEnv")){
                 if (checkParams(getParams(tag.getName()))) {
-                    Scenario linescn = (Scenario) pjp.getTarget();
                     tags.add(new Tag("@ignore", line));
                     tags.add(new Tag("@envCondition", line));
-                    ThreadProperty.set("skippedOnParams" + pjp.getArgs()[3].toString() + linescn.getLine(), "true");
-                    break;
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     /*

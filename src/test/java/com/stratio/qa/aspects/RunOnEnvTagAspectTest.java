@@ -15,11 +15,10 @@
  */
 package com.stratio.qa.aspects;
 
-import gherkin.formatter.model.Comment;
 import gherkin.formatter.model.Tag;
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,5 +54,35 @@ public class RunOnEnvTagAspectTest {
     public void testGetEmptyParams() throws Exception {
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.getParams("@runOnEnv"))
                 .withMessage("Error while parsing params. Format is: \"runOnEnv(PARAM)\", but found: " + "@runOnEnv");
+    }
+
+    @Test
+    public void testTagIterationRun() throws Exception {
+        System.setProperty("HELLO","OK");
+        List<Tag> tagList = new ArrayList<>();
+        tagList.add(new Tag("@runOnEnv(HELLO)", 1));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationIgnoreRun() throws Exception {
+        List<Tag> tagList = new ArrayList<>();
+        tagList.add(new Tag("@runOnEnv(BYE)", 1));
+        assertThat(true).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationSkip() throws Exception {
+        List<Tag> tagList = new ArrayList<>();
+        tagList.add(new Tag("@skipOnEnv(HELLO_NO)", 1));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationIgnoreSkip() throws Exception {
+        System.setProperty("HELLO","OK");
+        List<Tag> tagList = new ArrayList<>();
+        tagList.add(new Tag("@skipOnEnv(HELLO)", 1));
+        assertThat(true).isEqualTo(runontag.tagsIteration(tagList,1));
     }
 }
