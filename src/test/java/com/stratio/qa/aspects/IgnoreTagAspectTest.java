@@ -99,6 +99,6 @@ public class IgnoreTagAspectTest {
         String scnName = "Not ignored scenario";
         IgnoreTagAspect.ignoreReasons exit = null;
 
-        assertThat(exit).as("Scenario 'test ignore in scenario' ignored because of ticket: XXX-123").isEqualTo(ignoretag.manageTags(tagList,scnName));
+        assertThat(exit).as("Scenario not ignored.").isEqualTo(ignoretag.manageTags(tagList,scnName));
     }
 }
