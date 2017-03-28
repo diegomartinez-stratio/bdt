@@ -21,7 +21,7 @@ Feature: Selenium run test
     Then I switch to the iframe on index '0'
 
   Scenario: Dummy scenario with HTTPS
-    Given My app is running in 'www.google.com'
+    Given My app is running in 'qa.stratio.com'
     When I securely browse to '/'
 
   Scenario: Checking element steps
