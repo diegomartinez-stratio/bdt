@@ -76,7 +76,7 @@ public class IgnoreTagAspect {
             logger.error("Scenario '" + scenario.getName() + "' failed due to wrong use of the @ignore tag. ");
         }
 
-        if ((!exitReason.equals(NOTIGNORED)) || (!(exitReason.equals(NOREASON)))) {
+        if ((!(exitReason.equals(NOTIGNORED))) && (!(exitReason.equals(NOREASON)))) {
             runtime.buildBackendWorlds(reporter, tags, scenario.getName());
             formatter.startOfScenarioLifeCycle(scenario);
             formatter.endOfScenarioLifeCycle(scenario);
