@@ -23,6 +23,7 @@ Feature: Selenium run test
   Scenario: Dummy scenario with HTTPS
     Given My app is running in 'qa.stratio.com'
     When I securely browse to '/'
+    Then I take a snapshot
 
   Scenario: Checking element steps
     Given My app is running in 'jenkins.stratio.com'
@@ -32,6 +33,7 @@ Feature: Selenium run test
     And I click on the element on index '0'
     When '1' elements exists with 'id:main-panel'
     Then the element on index '0' has 'id' as 'main-panel'
+    And the element on index '0' has 'User:' as text
     Then '1' elements exists with 'id:j_username'
     And I clear the content on text input at index '0'
     When '1' elements exists with 'id:remember_me'
