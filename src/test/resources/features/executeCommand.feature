@@ -13,6 +13,7 @@ Feature: Simple run test
     When I run 'ls -la /tmp' in the ssh connection and save the value in environment variable 'DEFEXSTAT'
     Then '!{DEFEXSTAT}' contains 'total'
 
+  @ignore @tillfixed(QA-374)
   Scenario: Run command locally
     Given I run 'ls /tmp | wc -l' locally with exit status '0' and save the value in environment variable 'wordcount'
 

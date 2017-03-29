@@ -13,6 +13,7 @@ Feature: Selenium run test
   Scenario: Dummy scenario with iframes
     Given My app is running in 'jenkins.stratio.com'
     When I browse to '/'
+    Then I take a snapshot
     Then I maximize the browser
     When I switch to iframe with 'id:_yuiResizeMonitor'
     Then I wait '1' seconds
@@ -23,7 +24,6 @@ Feature: Selenium run test
   Scenario: Dummy scenario with HTTPS
     Given My app is running in 'qa.stratio.com'
     When I securely browse to '/'
-    Then I take a snapshot
 
   Scenario: Checking element steps
     Given My app is running in 'jenkins.stratio.com'
