@@ -542,25 +542,20 @@ public class GivenGSpec extends BaseGSpec {
     * @param pemFile (required if password null)
     *
     */
-    @Given("^I authenticate to DCOS cluster '(.+?)' with email '(.+?)', user '(.+?)'( and password '(.*?)')?( using pem file '(.+?)')$")
-    public void authenticateDCOSpem(String remoteHost, String email, String user, String foo, String password, String bar, String pemFile) throws Exception {
-        String DCOSsecret = null;
-        if ((pemFile == null) || (pemFile.equals("none"))) {
-            if ((password.equals("")) || (password == null)) {
-                throw new Exception("You have to provide a password or a pem file to be used for connection");
-            }
-            commonspec.setRemoteSSHConnection(new RemoteSSHConnection(user, password, remoteHost, null));
-            commonspec.getRemoteSSHConnection().runCommand("sudo cat /var/lib/dcos/dcos-oauth/auth-token-secret");
-            DCOSsecret = commonspec.getRemoteSSHConnection().getResult().trim();
+    @Given("^I authenticate to DCOS cluster '(.+?)' using email '(.+?)'( with user '(.+?)'( and password '(.+?)'| and pem file '(.+?)'))?$")
+    public void authenticateDCOSpem(String remoteHost, String email, String foo, String user, String bar, String password, String pemFile) throws Exception {
+        String DCOSsecret;
+        if (foo == null){
+            commonspec.setRemoteSSHConnection(new RemoteSSHConnection("root", "stratio", remoteHost, null));
         } else {
-            File pem = new File(pemFile);
-            if (!pem.exists()) {
-                throw new Exception("Pem file: " + pemFile + " does not exist");
-            }
-            commonspec.setRemoteSSHConnection(new RemoteSSHConnection(user, null, remoteHost, pemFile));
-            commonspec.getRemoteSSHConnection().runCommand("sudo cat /var/lib/dcos/dcos-oauth/auth-token-secret");
-            DCOSsecret = commonspec.getRemoteSSHConnection().getResult().trim();
+            commonspec.setRemoteSSHConnection(new RemoteSSHConnection(user, password, remoteHost, pemFile));
         }
+        commonspec.getRemoteSSHConnection().runCommand("sudo cat /var/lib/dcos/dcos-oauth/auth-token-secret");
+        DCOSsecret = commonspec.getRemoteSSHConnection().getResult().trim();
+        setDCOSCookie(DCOSsecret, email);
+    }
+
+    public void setDCOSCookie(String DCOSsecret, String email) throws Exception {
         final JWTSigner signer = new JWTSigner(DCOSsecret);
         final HashMap<String, Object> claims = new HashMap();
         claims.put("uid", email);
@@ -569,36 +564,6 @@ public class GivenGSpec extends BaseGSpec {
         List<Cookie> cookieList = new ArrayList<Cookie>();
         cookieList.add(cookie);
         commonspec.setCookies(cookieList);
-        commonspec.getLogger().debug("DCOS cookie was set: {}", cookie);
-
-    }
-
-    /*
-    * Authenticate in a DCOS cluster
-    *
-    * @param dcosHost
-    * @param user
-    *
-    */
-    @Given("^I authenticate to DCOS cluster '(.+?)' with email '(.+?)'.$")
-    public void authenticateDCOS(String dcosCluster, String user) throws Exception {
-        commonspec.setRemoteSSHConnection(new RemoteSSHConnection("root", "stratio", dcosCluster, null));
-        commonspec.getRemoteSSHConnection().runCommand("cat /var/lib/dcos/dcos-oauth/auth-token-secret");
-        String DCOSsecret = commonspec.getRemoteSSHConnection().getResult().trim();
-
-        final JWTSigner signer = new JWTSigner(DCOSsecret);
-        final HashMap<String, Object> claims = new HashMap();
-        claims.put("uid", user);
-
-        final String jwt = signer.sign(claims);
-
-        Cookie cookie = new Cookie("dcos-acs-auth-cookie", jwt, false, "", "", 99999, false, false);
-        List<Cookie> cookieList = new ArrayList<Cookie>();
-
-        cookieList.add(cookie);
-
-        commonspec.setCookies(cookieList);
-
     }
 
     /*
