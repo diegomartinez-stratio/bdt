@@ -10,16 +10,9 @@ Feature: Selenium run test
     Then I send 'ENTER' on the element on index '0'
     And I wait '1' seconds
 
-  Scenario: Dummy scenario with iframes
-    Given My app is running in 'jenkins.stratio.com'
-    When I browse to '/'
-    Then I take a snapshot
-    Then I maximize the browser
-    When I switch to iframe with 'id:_yuiResizeMonitor'
-    Then I wait '1' seconds
-    And I switch to a parent frame
-    When '1' elements exists with 'id:_yuiResizeMonitor'
-    Then I switch to the iframe on index '0'
+  @include(feature:scenarioIncluded.feature,scenario:Dummy_scenario)
+  Scenario: Testing include
+    Given I wait '1' seconds
 
   Scenario: Dummy scenario with HTTPS
     Given My app is running in 'qa.stratio.com'
