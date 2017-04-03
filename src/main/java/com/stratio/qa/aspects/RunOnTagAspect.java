@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.stratio.qa.aspects;
 
 import com.stratio.qa.utils.ThreadProperty;
@@ -95,7 +96,7 @@ public class RunOnTagAspect {
                     tags.add(new Tag("@envCondition", line));
                     return true;
                 }
-            } else if (tag.getName().contains("@skipOnEnv")){
+            } else if (tag.getName().contains("@skipOnEnv")) {
                 if (checkParams(getParams(tag.getName()))) {
                     tags.add(new Tag("@ignore", line));
                     tags.add(new Tag("@envCondition", line));
