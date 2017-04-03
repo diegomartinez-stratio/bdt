@@ -153,6 +153,12 @@ public class CassandraToolsIT extends BaseGSpec {
         }
     }
 
+    @Test
+    public void testCassandraMetaData() throws DBException {
+        Metadata metaData = commonspec.getCassandraClient().getMetadata();
+        assert metaData.getClusterName().equals("Stratio cluster");
+    }
+
     @AfterClass
     public void freeCassandra() {
         commonspec.getCassandraClient().dropKeyspace(this.keySpace);
