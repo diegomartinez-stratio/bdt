@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.stratio.qa.aspects;
 
 import com.stratio.qa.cucumber.testng.CucumberReporter;
@@ -38,8 +39,8 @@ import java.util.List;
 @Aspect
 public class ReplacementAspect {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass()
-            .getCanonicalName());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getCanonicalName());
+
     private String lastEchoedStep = "";
 
 
