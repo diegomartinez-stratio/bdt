@@ -112,8 +112,8 @@ public class RunOnTagAspect {
     */
     public String[] getParams(String s) throws Exception {
         String[] val = s.substring((s.lastIndexOf("(") + 1), (s.length()) - 1).split(",");
-        if(val[0].startsWith("@")) {
-            throw new Exception("Error while parsing params. Format is: \"runOnEnv(PARAM)\", but found: " + s);
+        if (val[0].startsWith("@")) {
+            throw new Exception( "Error while parsing params. Format is: \"runOnEnv(PARAM)\", but found: " + s);
         }
         return val;
     }
@@ -125,8 +125,8 @@ public class RunOnTagAspect {
         if ("".equals(params[0])) {
             throw new Exception("Error while parsing params. Params must be at least one");
         }
-        for(int i = 0; i < params.length; i++) {
-            if (System.getProperty(params[i], "").isEmpty()){
+        for (int i = 0; i < params.length; i++) {
+            if (System.getProperty(params[i], "").isEmpty()) {
                 return false;
             }
         }
