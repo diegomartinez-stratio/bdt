@@ -142,7 +142,6 @@ public class CassandraToolsIT extends BaseGSpec {
         // that belong to the dataTable
         List<String> selectQueries = giveQueriesList(this.dataTableComparison, tableName, columnNames(this.dataTableComparison.raw().get(0)));
         //Check the data  of cassandra with different queries
-        Metadata metainfo = commonspec.getCassandraClient().getMetadata();
         int index = 1;
         for (String execQuery : selectQueries) {
             res = commonspec.getCassandraClient().executeQuery(execQuery);
