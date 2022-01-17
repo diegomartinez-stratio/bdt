@@ -668,19 +668,30 @@ public class KubernetesClient {
      * @param pod       Pod
      * @param namespace Namespace
      * @param command   Command to execute
+     * @param container Container of Pod
      * @throws InterruptedException
      */
-    public String execCommand(String pod, String namespace, String[] command) throws InterruptedException {
+    public String execCommand(String pod, String namespace, String container, String[] command) throws InterruptedException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream error = new ByteArrayOutputStream();
         execLatch = new CountDownLatch(1);
+        ExecWatch execWatch;
+        if (container == null) {
+            execWatch = k8sClient.pods().inNamespace(namespace).withName(pod)
+                    .writingOutput(out)
+                    .writingError(error)
+                    .usingListener(new MyPodExecListener())
+                    .exec(command);
 
-        ExecWatch execWatch = k8sClient.pods().inNamespace(namespace).withName(pod)
-                .writingOutput(out)
-                .writingError(error)
-                .usingListener(new MyPodExecListener())
-                .exec(command);
+        } else {
+            execWatch = k8sClient.pods().inNamespace(namespace).withName(pod)
+                    .inContainer(container)
+                    .writingOutput(out)
+                    .writingError(error)
+                    .usingListener(new MyPodExecListener())
+                    .exec(command);
 
+        }
         boolean latchTerminationStatus = execLatch.await(30, TimeUnit.SECONDS);
         if (!latchTerminationStatus) {
             logger.warn("Latch could not terminate within specified time");

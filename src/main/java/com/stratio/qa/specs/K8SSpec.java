@@ -406,9 +406,9 @@ public class K8SSpec extends BaseGSpec {
         }
     }
 
-    @When("^I execute '(.+?)' command in pod with name '(.+?)' in namespace '(.+?)'( and save it in environment variable '(.+?)')?( and save it in file '(.*?)')?$")
-    public void runCommandInPod(String command, String name, String namespace, String envVar, String fileName) throws Exception {
-        String result = commonspec.kubernetesClient.execCommand(name, namespace, command.split("\n| "));
+    @When("^I execute '(.+?)' command in pod with name '(.+?)' in namespace '(.+?)'( in container '(.*?)')?( and save it in environment variable '(.+?)')?( and save it in file '(.*?)')?$")
+    public void runCommandInPod(String command, String name, String namespace, String container, String envVar, String fileName) throws Exception {
+        String result = commonspec.kubernetesClient.execCommand(name, namespace, container, command.split("\n| "));
         if (envVar != null) {
             ThreadProperty.set(envVar, result);
         }
@@ -417,9 +417,9 @@ public class K8SSpec extends BaseGSpec {
         }
     }
 
-    @When("^I execute the command defined in datatable in pod with name '(.+?)' in namespace '(.+?)'( and save it in environment variable '(.+?)')?( and save it in file '(.*?)')?:$")
-    public void runCommandInPodDatatable(String name, String namespace, String envVar, String fileName, DataTable dataTable) throws Exception {
-        String result = commonspec.kubernetesClient.execCommand(name, namespace, dataTable.asList().toArray(new String[0]));
+    @When("^I execute the command defined in datatable in pod with name '(.+?)' in namespace '(.+?)'( in container '(.*?)')?( and save it in environment variable '(.+?)')?( and save it in file '(.*?)')?:$")
+    public void runCommandInPodDatatable(String name, String namespace, String container, String envVar, String fileName, DataTable dataTable) throws Exception {
+        String result = commonspec.kubernetesClient.execCommand(name, namespace, container, dataTable.asList().toArray(new String[0]));
         if (envVar != null) {
             ThreadProperty.set(envVar, result);
         }
