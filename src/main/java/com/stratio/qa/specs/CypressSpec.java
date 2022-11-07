@@ -54,9 +54,9 @@ public class CypressSpec extends BaseGSpec {
             cypressVariables = "";
         }
 
-        String configVariable = configFile == null ? "" : " --config-file cypress/integration/" + configFile;
+        String configVariable = configFile == null ? "" : " --config-file cypress/e2e/" + configFile;
         String videoVariable = videopath == null ? "" : " --config trashAssetsBeforeRuns=false,videoUploadOnPasses=true,videosFolder=" + videopath;
-        String command = cypressVariables + " npx cypress run --spec cypress/integration/" + testcase + configVariable + videoVariable;
+        String command = cypressVariables + " npx cypress run --spec cypress/e2e/" + testcase + configVariable + videoVariable;
 
         this.commonspec.getLogger().info("Executing cypress: " + command);
 

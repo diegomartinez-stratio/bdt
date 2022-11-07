@@ -17,3 +17,6 @@ testMultiloopOutput*.txt
 *.key
 *.keytab
 *.pem
+.npmrc
+package-lock.json
+node_modules

@@ -2,7 +2,7 @@ Feature: Basic cypress tests
 
   @cypress
   Scenario: Test cypress
-    When I run Cypress testcase 'basictest.spec.js'
+    When I run Cypress testcase 'basictest.cy.js'
       | notused       | notused                       |
 
   @cypress

@@ -4,7 +4,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 
 ## 1.0.0 (upcoming)
 
-* Pending changelog
+* [SAAS-6968] Upgrade to Cypress 10.11.0
 
 ## Previous development
 
