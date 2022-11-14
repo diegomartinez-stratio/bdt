@@ -349,7 +349,17 @@ public class KubernetesClient {
         if (gosecBaasIngress != null && gosecBaasIngress.getSpec().getRules().get(0).getHttp().toString().contains("path=" + basepath + "/gosec/baas")) {
             ThreadProperty.set("KEOS_GOSEC_BAAS_INGRESS_PATH", basepath + "/gosec/baas");
         }
+
+        ThreadProperty.set("KEOS_GOSEC_SIS_API_INGRESS_PATH", "/sisapi");
+        Ingress gosecSisApiIngress = k8sClient.network().v1().ingresses().inNamespace("keos-auth").withName("sis-api").get();
+        if (gosecSisApiIngress != null && gosecSisApiIngress.getSpec().getRules().get(0).getHttp().toString().contains("path=" + basepath + "/gosec/sisapi")) {
+            ThreadProperty.set("KEOS_GOSEC_SIS_API_INGRESS_PATH", basepath + "/gosec/sisapi");
+        }
     }
+
+
+
+
 
     private void getK8sCCTConfig(CommonG commonspec) {
         try {
