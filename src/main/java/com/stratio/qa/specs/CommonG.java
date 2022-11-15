@@ -1586,6 +1586,10 @@ public class CommonG {
         this.headers = headers;
     }
 
+    public void clearHeaders() {
+        setHeaders(new HashMap<>());
+    }
+
     /**
      * Checks the different results of a previous query to CSV file
      *
@@ -2017,6 +2021,9 @@ public class CommonG {
         CookiesUtils.setCookies(cookies);
     }
 
+    public void clearCookies() {
+        CookiesUtils.setCookies(new ArrayList<>());
+    }
 
     /**
      * Parse jsonpath expression from a given string.

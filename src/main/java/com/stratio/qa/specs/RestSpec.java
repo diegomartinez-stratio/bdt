@@ -517,4 +517,14 @@ public class RestSpec extends BaseGSpec {
         }
     }
 
+    @Given("^I clear the cookies$")
+    public void clearStoredCookies() {
+        commonspec.clearCookies();
+    }
+
+    @Given("^I clear the headers$")
+    public void clearStoredHeaders() {
+        commonspec.clearHeaders();
+    }
+
 }
