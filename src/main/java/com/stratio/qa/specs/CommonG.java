@@ -739,7 +739,7 @@ public class CommonG {
 
         if ("json".equals(type) || "scim".equals(type)) {
             String std = text.replace("\r", "").replace("\n", ""); // make sure we have unix style text regardless of the input
-            result = JsonValue.readHjson(std).asObject().toString();
+            result = JsonValue.readHjson(std).toString();
         } else {
             result = text;
         }
