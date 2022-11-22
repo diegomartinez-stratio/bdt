@@ -70,13 +70,19 @@ public class HookGSpec extends BaseGSpec {
 
     private static final String alwaysTAG = "@always";
 
+    private static final String continueOnPreviousFeatureFailureTAG = "@continueOnPreviousFeatureFailure";
+
     private static boolean prevScenarioFailed = false;
+
+    private static boolean importantScenarioHasFail = false;
 
     private static final String quietasdefault = System.getProperty("quietasdefault", "true");
 
     public static boolean loggerEnabled = true;
 
     public static final int ORDER_30 = 30;
+
+    public static String featureUri = "";
 
     /**
      * Default constructor.
@@ -128,14 +134,14 @@ public class HookGSpec extends BaseGSpec {
             if (!isTagIncludedInScenario(scenario, notImportantTAG)) {
                 boolean isFailed = scenario.isFailed();
                 if (isFailed) {
-                    prevScenarioFailed = isFailed;
+                    prevScenarioFailed = importantScenarioHasFail = isFailed;
                 }
             }
         } else {
             if (isTagIncludedInScenario(scenario, importantTAG)) {
                 boolean isFailed = scenario.isFailed();
                 if (isFailed) {
-                    prevScenarioFailed = isFailed;
+                    prevScenarioFailed = importantScenarioHasFail = isFailed;
                 }
             }
         }
@@ -146,6 +152,16 @@ public class HookGSpec extends BaseGSpec {
 
     @Before
     public void quit_if_tagged_scenario_failed(Scenario scenario) throws Throwable {
+        if (!featureUri.equals(scenario.getUri())) { // the Scenario is in a new Feature
+            if (importantScenarioHasFail) {
+                prevScenarioFailed = true;
+            }
+            if (isTagIncludedInScenario(scenario, continueOnPreviousFeatureFailureTAG)) {
+                prevScenarioFailed = false;
+            }
+        }
+        featureUri = scenario.getUri();
+
         if (prevScenarioFailed) {
             if (!isTagIncludedInScenario(scenario, alwaysTAG)) {
                 commonspec.getLogger().warn("An important scenario has failed! TESTS EXECUTION ABORTED!");

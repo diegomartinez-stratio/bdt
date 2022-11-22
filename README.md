@@ -289,3 +289,27 @@ Feature: Example Quit after tag
     Then something
   ```
 
+Finally, the `@important` tag will make the rest of the Features of the Test Group to be skipped, but this behavior 
+can be overwritten using the tag `@continueOnPreviousFeatureFailure` in the Feature(s) that you want to keep being executed.
+Example:
+
+```
+Feature: Failing feature with important tag
+
+  @important
+  Scenario: important and fails
+    Given I fail
+
+
+Feature: Skipped feature
+
+  Scenario: Skipped
+    Then this feature will be skipped because the previous failed
+
+
+@continueOnPreviousFeatureFailure
+Feature: Feature that will continue
+
+  Scenario: Will continue
+    Then this feature will be exeucted
+```
