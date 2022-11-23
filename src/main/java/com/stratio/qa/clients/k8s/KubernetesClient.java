@@ -52,6 +52,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.fabric8.kubernetes.client.Config.KUBERNETES_AUTH_TRYSERVICEACCOUNT_SYSTEM_PROPERTY;
+
 public class KubernetesClient {
 
     private static KubernetesClient CLIENT;
@@ -84,6 +86,7 @@ public class KubernetesClient {
     }
 
     public void connect(String kubeConfigPath) throws IOException {
+        System.setProperty(KUBERNETES_AUTH_TRYSERVICEACCOUNT_SYSTEM_PROPERTY, "false");
         StringBuilder contentBuilder = new StringBuilder();
         try (Stream<String> stream = Files.lines(Paths.get(kubeConfigPath), StandardCharsets.UTF_8)) {
             stream.forEach(s -> contentBuilder.append(s).append("\n"));
