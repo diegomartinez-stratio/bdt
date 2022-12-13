@@ -180,10 +180,20 @@ public class KubernetesClient {
                 try {
                     ThreadProperty.set("KEOS_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
                 } catch (PathNotFoundException e) {
-                    ThreadProperty.set("KEOS_DOMAIN", System.getProperty("KEOS_CLUSTER_ID") + "." + "int");
+                    ThreadProperty.set("KEOS_DOMAIN", System.getProperty("KEOS_DOMAIN", System.getProperty("KEOS_CLUSTER_ID") + "." + "int"));
                 }
 
-                ThreadProperty.set("KEOS_EXTERNAL_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.external_domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+                try {
+                    ThreadProperty.set("KEOS_EXTERNAL_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.external_domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+                } catch (PathNotFoundException e) {
+                    ThreadProperty.set("KEOS_EXTERNAL_DOMAIN", System.getProperty("KEOS_EXTERNAL_DOMAIN", System.getProperty("KEOS_CLUSTER_ID") + "." + "ext"));
+                }
+
+                try {
+                    ThreadProperty.set("KEOS_EXTERNAL_REGISTRY", commonspec.getJSONPathString(keosJson, "$.external_registry.url", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+                } catch (PathNotFoundException e) {
+                    ThreadProperty.set("KEOS_EXTERNAL_REGISTRY", System.getProperty("KEOS_EXTERNAL_REGISTRY", "qa.int.stratio.com"));
+                }
 
                 ThreadProperty.set("ADMIN_SUBDOMAIN", "admin");
                 ThreadProperty.set("ADMIN_BASEPATH", "/");
