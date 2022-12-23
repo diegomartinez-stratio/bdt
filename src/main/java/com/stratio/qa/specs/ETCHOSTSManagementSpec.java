@@ -16,7 +16,6 @@
 
 package com.stratio.qa.specs;
 
-import com.stratio.qa.utils.RemoteSSHConnectionsUtil;
 import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.java.en.Given;
 
@@ -78,4 +77,10 @@ public class ETCHOSTSManagementSpec extends BaseGSpec {
         ThreadProperty.set(envVar, javaPID);
     }
 
+    @Given("^the host '(.+?)' is reachable in less than '(\\d+)' seconds$")
+    public void isHostReachable(String host, Integer timeout) throws Exception {
+        if (!commonspec.isHostReachable(host, timeout)) {
+            throw new Exception("Host " + host + " was not reachable after " + timeout + " seconds");
+        }
+    }
 }
