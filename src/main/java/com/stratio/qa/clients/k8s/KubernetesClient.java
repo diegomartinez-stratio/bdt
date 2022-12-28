@@ -93,7 +93,7 @@ public class KubernetesClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        k8sClient = new KubernetesClientBuilder().withConfig(Config.fromKubeconfig(contentBuilder.toString())).build();
+        k8sClient = new KubernetesClientBuilder().withConfig(Config.fromKubeconfig(null, contentBuilder.toString(), kubeConfigPath)).build();
     }
 
     public void getK8sConfigFromWorkspace(CommonG commonspec) throws Exception {
