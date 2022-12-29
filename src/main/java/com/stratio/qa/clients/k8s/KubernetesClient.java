@@ -52,8 +52,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import io.fabric8.kubernetes.client.utils.Utils;
+
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_AUTH_TRYSERVICEACCOUNT_SYSTEM_PROPERTY;
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_TRYNAMESPACE_PATH_SYSTEM_PROPERTY;
+import static io.fabric8.kubernetes.client.Config.KUBERNETES_KUBECONFIG_FILE;
 
 public class KubernetesClient {
 
@@ -89,12 +92,14 @@ public class KubernetesClient {
     public void connect(String kubeConfigPath) throws IOException {
         System.setProperty(KUBERNETES_AUTH_TRYSERVICEACCOUNT_SYSTEM_PROPERTY, "false");
         System.setProperty(KUBERNETES_TRYNAMESPACE_PATH_SYSTEM_PROPERTY, "false");
+        System.setProperty(KUBERNETES_KUBECONFIG_FILE, kubeConfigPath);
         StringBuilder contentBuilder = new StringBuilder();
         try (Stream<String> stream = Files.lines(Paths.get(kubeConfigPath), StandardCharsets.UTF_8)) {
             stream.forEach(s -> contentBuilder.append(s).append("\n"));
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         k8sClient = new KubernetesClientBuilder().withConfig(Config.fromKubeconfig(null, contentBuilder.toString(), kubeConfigPath)).build();
     }
 
