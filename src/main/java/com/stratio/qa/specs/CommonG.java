@@ -2388,6 +2388,9 @@ public class CommonG {
                 props.setProperty("prepareThreshold", "0");
             }
         }
+        props.setProperty("loginTimeout", "60");
+        props.setProperty("connectTimeout", "60");
+        props.setProperty("socketTimeout", "60");
         try {
             JDBCConnection.setConnection(DriverManager.getConnection("jdbc:postgresql://" + host + ":" + port + "/" + database, props));
         } catch (SQLException se) {
