@@ -52,8 +52,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import io.fabric8.kubernetes.client.utils.Utils;
-
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_AUTH_TRYSERVICEACCOUNT_SYSTEM_PROPERTY;
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_TRYNAMESPACE_PATH_SYSTEM_PROPERTY;
 import static io.fabric8.kubernetes.client.Config.KUBERNETES_KUBECONFIG_FILE;
@@ -135,10 +133,9 @@ public class KubernetesClient {
             commandExecutionSpec.executeLocalCommand(commandRmTgz, null, null);
 
             // Obtain and export values
+            FileSpec fileSpec = new FileSpec(commonspec);
             if (new File("target/test-classes/" + workspaceName + "/cluster_versions.yaml").exists()) {
-                FileSpec fileSpec = new FileSpec(commonspec);
                 fileSpec.convertYamlToJson(workspaceName + "/cluster_versions.yaml", workspaceName + "/cluster_versions.json");
-
                 String clusterVersionsJson = commonspec.retrieveData(workspaceName + "/cluster_versions.json", "json");
 
                 if (System.getProperty("KEOS_VERSION") == null) {
@@ -147,16 +144,25 @@ public class KubernetesClient {
                 if (System.getProperty("UNIVERSE_VERSION") == null) {
                     System.setProperty("UNIVERSE_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.clusterVersions.universeVersion", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
                 }
+            } else if (new File("target/test-classes/" + workspaceName + "/cluster.yaml").exists()) {
+                fileSpec.convertYamlToJson(workspaceName + "/cluster.yaml", workspaceName + "/cluster.json");
+                String clusterVersionsJson = commonspec.retrieveData(workspaceName + "/cluster.json", "json");
+
+                if (System.getProperty("KEOS_VERSION") == null) {
+                    System.setProperty("KEOS_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.keos.version", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+                }
             }
 
             // Obtain and export values
             if (!new File("target/test-classes/" + workspaceName + "/keos.json").exists()) {
-                FileSpec fileSpec = new FileSpec(commonspec);
                 fileSpec.convertYamlToJson(workspaceName + "/keos.yaml", workspaceName + "/keos.json");
             }
             String keosJson = commonspec.retrieveData(workspaceName + "/keos.json", "json");
             ThreadProperty.set("CLUSTER_SSH_USER", commonspec.getJSONPathString(keosJson, "$.infra.ssh_user", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
 
+            if (System.getProperty("KEOS_VERSION") == null) {
+                throw new Exception("cluster_versions.yaml or cluster.yaml not found, so KEOS_VERSION must be defined");
+            }
             if (System.getProperty("KEOS_VERSION").matches(".*0\\.[1-4].*")) {
 
                 ThreadProperty.set("KEOS_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
@@ -246,7 +252,8 @@ public class KubernetesClient {
 
         // Save IP in /etc/hosts
         if (setKubernetesHost) {
-            commonspec.getETCHOSTSManagementUtils().addK8sHost(ThreadProperty.get("WORKER_IP"), ThreadProperty.get("KEOS_SIS_HOST") + " " + ThreadProperty.get("KEOS_OAUTH2_PROXY_HOST"));
+            commonspec.getETCHOSTSManagementUtils().addK8sHost(ThreadProperty.get("KEOS_OAUTH2_PROXY_HOST_IP"), ThreadProperty.get("KEOS_OAUTH2_PROXY_HOST"));
+            commonspec.getETCHOSTSManagementUtils().addK8sHost(ThreadProperty.get("KEOS_SIS_HOST_IP"), ThreadProperty.get("KEOS_SIS_HOST"));
         }
 
         // Set variables from command-center-config configmap
@@ -305,6 +312,7 @@ public class KubernetesClient {
             }
             if (varName != null) {
                 ThreadProperty.set(varName, ingress.getSpec().getRules().get(0).getHost());
+                ThreadProperty.set(varName + "_IP", ingress.getStatus().getLoadBalancer().getIngress().get(0).getIp());
             }
         }
     }
