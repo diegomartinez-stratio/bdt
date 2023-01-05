@@ -797,4 +797,41 @@ public class K8SSpec extends BaseGSpec {
         Assertions.assertThat(response).isEqualTo(exitStatus);
 
     }
+
+    @When("I create secret using keos-operator in path '(.+?)' with params:")
+    public void createSecretKeosOperator(String path, DataTable params) throws Exception {
+        getPodsLabelSelector("pods", "app.kubernetes.io/instance=keos-operator,app.kubernetes.io/name=keos-operator", "keos-ops", "podKeosOp", null);
+        StringBuilder sbCommand = new StringBuilder();
+        sbCommand.append("keos vault write ").append(path);
+        for (int i = 0; i < params.cells().size(); i++) {
+            sbCommand.append(" ").append(params.cell(i, 0)).append("=").append(params.cell(i, 1));
+        }
+        commonspec.getLogger().info("Command: " + sbCommand);
+        List<List<String>> command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList(sbCommand.toString())
+        );
+        DataTable dataTable = DataTable.create(command);
+        runCommandInPodDatatable(ThreadProperty.get("podKeosOp"), "keos-ops", null, null, "result", null, null, null, null, dataTable);
+        commonspec.getLogger().info(ThreadProperty.get("result"));
+        Assertions.assertThat(ThreadProperty.get("result")).contains("Success!");
+    }
+
+    @When("I remove secret located in path '(.+?)' using keos-operator")
+    public void deleteSecretKeosOperator(String path) throws Exception {
+        getPodsLabelSelector("pods", "app.kubernetes.io/instance=keos-operator,app.kubernetes.io/name=keos-operator", "keos-ops", "podKeosOp", null);
+        StringBuilder sbCommand = new StringBuilder();
+        sbCommand.append("keos vault delete ").append(path);
+        commonspec.getLogger().info("Command: " + sbCommand);
+        List<List<String>> command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList(sbCommand.toString())
+        );
+        DataTable dataTable = DataTable.create(command);
+        runCommandInPodDatatable(ThreadProperty.get("podKeosOp"), "keos-ops", null, null, "result", null, null, null, null, dataTable);
+        commonspec.getLogger().info(ThreadProperty.get("result"));
+        Assertions.assertThat(ThreadProperty.get("result")).contains("Success!");
+    }
 }
