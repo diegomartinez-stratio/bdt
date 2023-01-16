@@ -61,7 +61,7 @@ public class KeosSpec extends BaseGSpec {
      * @param pathWithoutLogin : whether to remove /login or keep it
      * @throws Exception exception
      */
-    @Given("^I set sso( governance| discovery)? keos token using host '(.+?)' with user '(.+?)', password '(.+?)' and tenant '(.+?)'( without host name verification)?( without login path)?$")
+    @Given("^I set sso( governance| discovery | intelligence)? keos token using host '(.+?)' with user '(.+?)', password '(.+?)' and tenant '(.+?)'( without host name verification)?( without login path)?$")
     public void setGoSecSSOCookieKeos(String token_type, String ssoHost, String userName, String password, String tenant, String hostVerifier, String pathWithoutLogin) throws Exception {
         GosecSSOUtils ssoUtils = new GosecSSOUtils(ssoHost, userName, password, tenant, token_type);
         ssoUtils.setVerifyHost(hostVerifier == null);
@@ -76,6 +76,9 @@ public class KeosSpec extends BaseGSpec {
                 Assert.assertTrue(ThreadProperty.has("discovery_sso_cookie_name"),
                         "Discovery SSO Cookie name must be setup first in envVar 'discovery_sso_cookie_name'");
                 tokenList = new String[] {ThreadProperty.get("discovery_sso_cookie_name")};
+                break;
+            case "intelligence":
+                tokenList = new String[]{"jupyterhub-session-id", "jupyterhub-hub-login"};
                 break;
             default:
                 break;
@@ -105,6 +108,13 @@ public class KeosSpec extends BaseGSpec {
                     "Discovery cookie was not found on SSO response");
             ThreadProperty.set(ThreadProperty.get("discovery_sso_cookie_name"),
                     ssoCookies.get(ThreadProperty.get("discovery_sso_cookie_name")));
+        }
+
+        if ("intelligence".equals(String.valueOf(token_type).trim())) {
+            for (String cookie : tokenList) {
+                Assert.assertNotNull(ssoCookies.get(cookie), "SSO cookie " + cookie + " is not defined after login");
+                ThreadProperty.set(cookie, ssoCookies.get(cookie));
+            }
         }
 
         this.commonspec.getLogger().debug("Cookies to set:");

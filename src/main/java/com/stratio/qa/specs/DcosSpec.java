@@ -275,6 +275,31 @@ public class DcosSpec extends BaseGSpec {
     }
 
     /**
+     * Generate token to authenticate in gosec SSO for Intelligence
+     *
+     * @param ssoHost  : current sso host
+     * @param userName : username
+     * @param passWord : password
+     * @throws Exception exception
+     */
+    @Given("I set sso intelligence token using host '(.+?)' with user '(.+?)' and password '(.+?)'( and tenant '(.+?)')?( without host name verification)?( without login path)?$")
+    public void setGoSecSSOCookieForIntelligence(String ssoHost, String userName, String passWord, String tenant, String hostVerifier, String pathWithoutLogin) throws Exception {
+        String[] tokenList = new String[]{"jupyterhub-session-id", "jupyterhub-hub-login"};
+
+        GosecSSOUtils ssoUtils = new GosecSSOUtils(ssoHost, userName, passWord, tenant, null);
+        ssoUtils.setVerifyHost(hostVerifier == null);
+        HashMap<String, String> ssoCookies = ssoUtils.ssoTokenGenerator(pathWithoutLogin == null);
+        List<Cookie> cookiesAttributes = this.commonspec.addSsoToken(ssoCookies, tokenList);
+
+        this.commonspec.getLogger().debug("Intelligence Cookies to set:");
+        for (String cookie : tokenList) {
+            this.commonspec.getLogger().debug("\t" + cookie + ":" + ssoCookies.get(cookie));
+            ThreadProperty.set(cookie, ssoCookies.get(cookie));
+        }
+        commonspec.setCookies(cookiesAttributes);
+    }
+
+    /**
      * Checks if there are any unused nodes in the cluster and returns the IP of one of them.
      * REQUIRES A PREVIOUSLY-ESTABLISHED SSH CONNECTION TO DCOS-CLI TO WORK
      *
