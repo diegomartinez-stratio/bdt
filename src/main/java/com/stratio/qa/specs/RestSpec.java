@@ -146,6 +146,7 @@ public class RestSpec extends BaseGSpec {
                 response = commonspec.generateRequest(requestType, false, null, null, endPoint, modifiedData, type);
                 commonspec.getLogger().debug("Saving response");
                 commonspec.setResponse(requestType, response.get());
+                commonspec.getLogger().debug("Response body: \n" + commonspec.getResponse());
                 commonspec.getLogger().debug("Checking response value");
 
                 if (searchUntilContains) {
@@ -230,6 +231,7 @@ public class RestSpec extends BaseGSpec {
         // Save response
         commonspec.getLogger().debug("Saving response");
         commonspec.setResponse(requestType, response.get());
+        commonspec.getLogger().debug("Response body: \n" + commonspec.getResponse().getResponse());
     }
 
     /**
@@ -266,6 +268,7 @@ public class RestSpec extends BaseGSpec {
 
         // Save response
         commonspec.setResponse(requestType, response.get());
+        commonspec.getLogger().debug("Response body: \n" + commonspec.getResponse().getResponse());
     }
 
     /**
@@ -301,6 +304,7 @@ public class RestSpec extends BaseGSpec {
                     response = commonspec.generateRequest(requestType, false, null, null, endPoint, "", type, "");
                     commonspec.setResponse(requestType, response.get());
                     commonspec.getLogger().debug("Checking response value");
+                    commonspec.getLogger().debug("Response body: \n" + commonspec.getResponse().getResponse());
 
                     if (searchUntilContains) {
                         assertThat(commonspec.getResponse().getResponse()).containsPattern(pattern);
@@ -341,6 +345,7 @@ public class RestSpec extends BaseGSpec {
                     response = commonspec.generateRequest(requestType, false, null, null, endPoint, "", type, "");
                     commonspec.setResponse(requestType, response.get());
                     commonspec.getLogger().debug("Checking response value");
+                    commonspec.getLogger().debug("Response body: \n" + commonspec.getResponse().getResponse());
 
                     assertThat(commonspec.getResponse().getResponse());
                     timeout = i;
