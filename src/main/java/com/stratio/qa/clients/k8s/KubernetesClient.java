@@ -264,6 +264,9 @@ public class KubernetesClient {
 
         // Default values for some variables
         ThreadProperty.set("KEOS_PASSWORD", System.getProperty("KEOS_PASSWORD") != null ? System.getProperty("KEOS_PASSWORD") : "1234");
+
+        //Set Gosec label in depployment
+        setGosecVariables("gosec-management-baas", "keos-core");
     }
 
     private void getK8sVaultConfig(CommonG commonspec) throws Exception {
@@ -384,9 +387,6 @@ public class KubernetesClient {
             ThreadProperty.set("KEOS_GOSEC_SIS_API_INGRESS_PATH", basepath + "/gosec/sisapi");
         }
     }
-
-
-
 
 
     private void getK8sCCTConfig(CommonG commonspec) {
@@ -2069,5 +2069,25 @@ public class KubernetesClient {
         image = deployment.getSpec().getTemplate().getSpec().getContainers().get(0).getImage();
         version = image.split(":")[image.split(":").length - 1];
         return version;
+    }
+
+    private void setGosecVariables(String deploymentName, String namespace) throws Exception {
+        String label;
+        Deployment deployment = getDeployment(deploymentName, namespace);
+        label = deployment.getSpec().getSelector().getMatchLabels().toString();
+
+        try {
+            if (label.contains("app.kubernetes.io")) {
+                ThreadProperty.set("GOSEC_LABEL", "app.kubernetes.io/name");
+            } else {
+                if (label.contains("gosec.stratio.com")) {
+                    ThreadProperty.set("GOSEC_LABEL", "gosec.stratio.com/identifier");
+                } else {
+                    logger.warn("Not able to set the variable 'GOSEC_LABEL'");
+                }
+            }
+        } catch (KubernetesClientException e) {
+            e.printStackTrace();
+        }
     }
 }
