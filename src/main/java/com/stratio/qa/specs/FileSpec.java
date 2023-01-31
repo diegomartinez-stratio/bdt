@@ -146,21 +146,8 @@ public class FileSpec extends BaseGSpec {
         commonspec.getLogger().debug("Modifying data {} as {}", retrievedData, type);
         String modifiedData = commonspec.modifyData(retrievedData, type, modifications).toString();
 
-        // Create file (temporary) and set path to be accessible within test
-        File tempDirectory = new File(String.valueOf(System.getProperty("user.dir") + "/target/test-classes/"));
-        String absolutePathFile = tempDirectory.getAbsolutePath() + "/" + fileName;
-        commonspec.getLogger().debug("Creating file {} in 'target/test-classes'", absolutePathFile);
-        // Note that this Writer will delete the file if it exists
-        Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(absolutePathFile), "UTF-8"));
-        try {
-            out.write(modifiedData);
-        } catch (Exception e) {
-            commonspec.getLogger().error("Custom file {} hasn't been created:\n{}", absolutePathFile, e.toString());
-        } finally {
-            out.close();
-        }
-
-        Assertions.assertThat(new File(absolutePathFile).isFile());
+        // Store the file
+        writeInFile(modifiedData, fileName, false);
     }
 
     /**
@@ -213,22 +200,8 @@ public class FileSpec extends BaseGSpec {
         // Retrieve data
         String retrievedData = commonspec.asYaml(fileToConvert);
 
-        // Create file (temporary) and set path to be accessible within test
-        File tempDirectory = new File(String.valueOf(System.getProperty("user.dir") + "/target/test-classes/"));
-        String absolutePathFile = tempDirectory.getAbsolutePath() + "/" + fileName;
-        commonspec.getLogger().debug("Creating file {} in 'target/test-classes'", absolutePathFile);
-        // Note that this Writer will delete the file if it exists
-        Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(absolutePathFile), "UTF-8"));
-        try {
-            out.write(retrievedData);
-        } catch (Exception e) {
-            commonspec.getLogger().error("Custom file {} hasn't been created:\n{}", absolutePathFile, e.toString());
-            throw new RuntimeException("Custom file {} hasn't been created");
-        } finally {
-            out.close();
-        }
-
-        Assertions.assertThat(new File(absolutePathFile).isFile());
+        // Store the file
+        writeInFile(retrievedData, fileName, true);
     }
 
     @When("^I convert the yaml file '(.+?)' to json file '(.+?)'$")
@@ -237,22 +210,8 @@ public class FileSpec extends BaseGSpec {
         // Retrieve data
         String retrievedData = commonspec.convertYamlToJson(fileToConvert);
 
-        // Create file (temporary) and set path to be accessible within test
-        File tempDirectory = new File(String.valueOf(System.getProperty("user.dir") + "/target/test-classes/"));
-        String absolutePathFile = tempDirectory.getAbsolutePath() + "/" + fileName;
-        commonspec.getLogger().debug("Creating file {} in 'target/test-classes'", absolutePathFile);
-        // Note that this Writer will delete the file if it exists
-        Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(absolutePathFile), "UTF-8"));
-        try {
-            out.write(retrievedData);
-        } catch (Exception e) {
-            commonspec.getLogger().error("Custom file {} hasn't been created:\n{}", absolutePathFile, e.toString());
-            throw new RuntimeException("Custom file {} hasn't been created");
-        } finally {
-            out.close();
-        }
-
-        Assertions.assertThat(new File(absolutePathFile).isFile());
+        // Store the file
+        writeInFile(retrievedData, fileName, true);
     }
 
     @When("^I create zip file '(.+?)' from the following files:$")
@@ -281,6 +240,26 @@ public class FileSpec extends BaseGSpec {
         } catch (IOException ioe) {
             throw new Exception("Error creating zip file: " + ioe);
         }
+    }
+
+    /**
+     * Step to write a text to a file, using the doc string as the file contents
+     *
+     * File will be placed on path /target/test-classes
+     *
+     * Usage:
+     * Given I create text file 'test_file.txt' using the following text:
+     *     """
+     *     line 1
+     *     line 2
+     *
+     *     line 3
+     *     """
+     */
+    @When("^I create text file '(.+?)' using the following text:$")
+    public void createFileFromText(String fileName, String fileContents) throws Exception {
+        // Store the file
+        writeInFile(fileContents, fileName, true);
     }
 
 }

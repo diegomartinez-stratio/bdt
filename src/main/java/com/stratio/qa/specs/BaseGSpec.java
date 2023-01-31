@@ -34,8 +34,26 @@ public class BaseGSpec {
         return this.commonspec;
     }
 
-    public void writeInFile(String json, String fileName) throws Exception {
+    /**
+     * Creates a new file with the given contents, placing the new file on path /target/test-classes,
+     * not throwing an exception if the file couldn't be saved
+     *
+     * @param fileContents contents of the file
+     * @param fileName name of the file to create
+     * @throws Exception
+     */
+    public void writeInFile(String fileContents, String fileName) throws Exception {
+        writeInFile(fileContents, fileName, false);
+    }
 
+    /**
+     * Creates a new file with the given contents, placing the new file on path /target/test-classes
+     * @param fileContents contents of the file
+     * @param fileName name of the file to create
+     * @param throwExceptionOnWriteError whether to raise an exception if the file cannot be written or not
+     * @throws Exception
+     */
+    public void writeInFile(String fileContents, String fileName, boolean throwExceptionOnWriteError) throws Exception {
         // Create file (temporary) and set path to be accessible within test
         File tempDirectory = new File(System.getProperty("user.dir") + "/target/test-classes/");
         String absolutePathFile = tempDirectory.getAbsolutePath() + "/" + fileName;
@@ -43,9 +61,12 @@ public class BaseGSpec {
         // Note that this Writer will delete the file if it exists
         Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(absolutePathFile), StandardCharsets.UTF_8));
         try {
-            out.write(json);
+            out.write(fileContents);
         } catch (Exception e) {
             commonspec.getLogger().error("Custom file {} hasn't been created:\n{}", absolutePathFile, e.toString());
+            if (throwExceptionOnWriteError) {
+                throw new RuntimeException("Custom file {} hasn't been created");
+            }
         } finally {
             out.close();
         }

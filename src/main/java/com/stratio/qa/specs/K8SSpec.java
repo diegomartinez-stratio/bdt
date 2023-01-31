@@ -834,4 +834,29 @@ public class K8SSpec extends BaseGSpec {
         commonspec.getLogger().info(ThreadProperty.get("result"));
         Assertions.assertThat(ThreadProperty.get("result")).contains("Success!");
     }
+
+    /**
+     * kubectl cp /tmp/foo <some-namespace>/<some-pod>:/tmp/bar
+     */
+    @Given("^I outbound copy '(.+?)' to '(.+?)' in pod '(.+?)' in namespace '(.+?)'( in container '(.*?)')? checking that the copied file is not empty$")
+    public void copyToRemoteFileWithRetry(String localPath, String remotePath, String podName, String namespace, String container) {
+        String[] checkFileIsNotEmptyCommand = {"bash", "-ic", "[ -s " + remotePath + " ]"};
+        boolean fileWasUploadedCorrectly = false;
+
+        for (int i = 0; i < 5; i++) {
+            try {
+                // Copy the file
+                commonspec.kubernetesClient.copyFileToPod(podName, namespace, container, localPath, remotePath);
+                // Check that the file is not empty
+                commonspec.kubernetesClient.execCommand(podName, namespace, container, 15, checkFileIsNotEmptyCommand, null);
+                fileWasUploadedCorrectly = true;
+                break;
+            } catch (Exception e) {
+                commonspec.getLogger().warn("The outbound copy didn't work correctly, retrying...");
+                continue; // Repeat
+            }
+        }
+        Assert.assertTrue(fileWasUploadedCorrectly, "The file was not uploaded correctly after 5 attempts");
+    }
+
 }
