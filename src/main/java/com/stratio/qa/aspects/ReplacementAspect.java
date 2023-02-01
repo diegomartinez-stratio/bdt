@@ -150,7 +150,7 @@ public class ReplacementAspect {
                     PickleStepTestStep pickleTestStep = (PickleStepTestStep) pjp.getTarget();
                     PickleStep step = pickleTestStep.getPickleStep();
 
-                    // Replace elements in datatable
+                    // Replace elements in datatable and doc string
                     StringBuilder sbDataTable = new StringBuilder();
                     List<Argument> argumentList = new ArrayList<>(step.getArgument());
                     for (int a = 0; a < argumentList.size(); a++) {
@@ -171,6 +171,11 @@ public class ReplacementAspect {
                             }
                             pickleTable = new PickleTable(pickleRowList);
                             argumentList.set(a, pickleTable);
+                        }
+                        if (argumentList.get(a) instanceof PickleString) {
+                            PickleString pickleString = (PickleString) argumentList.get(a);
+                            pickleString = new PickleString(pickleString.getLocation(), replacedElement(pickleString.getContent(), pjp));
+                            argumentList.set(a, pickleString);
                         }
                     }
 

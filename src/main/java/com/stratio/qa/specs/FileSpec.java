@@ -260,6 +260,7 @@ public class FileSpec extends BaseGSpec {
     public void createFileFromText(String fileName, String fileContents) throws Exception {
         // Store the file
         writeInFile(fileContents, fileName, true);
+        commonspec.getLogger().debug("./target/test-classes" + fileName + " created with content: \n\n" + fileContents + "\n");
     }
 
 }
