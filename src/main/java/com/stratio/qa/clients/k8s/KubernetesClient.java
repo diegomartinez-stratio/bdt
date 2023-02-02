@@ -230,6 +230,9 @@ public class KubernetesClient {
 
                 ThreadProperty.set("ADMIN_VHOST", ThreadProperty.get("ADMIN_SUBDOMAIN") + "." + ThreadProperty.get("KEOS_EXTERNAL_DOMAIN"));
                 ThreadProperty.set("SIS_VHOST", ThreadProperty.get("SIS_SUBDOMAIN") + "." + ThreadProperty.get("KEOS_EXTERNAL_DOMAIN"));
+
+                ThreadProperty.set("ADMIN_URL", ThreadProperty.get("ADMIN_VHOST") + (ThreadProperty.get("ADMIN_BASEPATH").equals("/") ? "" : ThreadProperty.get("ADMIN_BASEPATH")));
+                ThreadProperty.set("SIS_URL", ThreadProperty.get("SIS_VHOST") + ThreadProperty.get("SIS_BASEPATH"));
             }
 
             ThreadProperty.set("CLUSTER_SSH_PEM_PATH", "./target/test-classes/" + workspaceName + "/key");
@@ -339,7 +342,7 @@ public class KubernetesClient {
             ThreadProperty.set("cct-paas-services_id", "cct-paas-services");
         }
 
-        String basepath = System.getProperty("KEOS_AUTH_ADMIN_BASEPATH", "");
+        String basepath = ThreadProperty.get("ADMIN_BASEPATH").equals("/") ? "" : ThreadProperty.get("ADMIN_BASEPATH");
 
         Ingress gosecIngress = k8sClient.network().v1().ingresses().inNamespace("keos-core").withName("gosec-management-ui").get();
         if (gosecIngress.getSpec().getRules().get(0).getHttp().toString().contains("path=" + basepath + "/gosec")) {
