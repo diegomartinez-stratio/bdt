@@ -204,7 +204,7 @@ public class LoopIncludeTagAspect {
 
             bufferedFeature = new BufferedReader(new FileReader(feature));
             while ((sCurrentLine = bufferedFeature.readLine()) != null) {
-                if (sCurrentLine.contains(scenarioName)) {
+                if (getScenarioNameFromCurrentLine(sCurrentLine).equals(scenarioName)) {
                     scenarioexists = true;
                     if (sCurrentLine.toUpperCase().contains("OUTLINE") && params == null) {
                         throw new IncludeException("->  Parameters were not given for this scenario outline.");
@@ -254,6 +254,12 @@ public class LoopIncludeTagAspect {
 
         return parsedFeature;
 
+    }
+
+    private String getScenarioNameFromCurrentLine(String sCurrentLine) {
+        return sCurrentLine.lastIndexOf("Scenario:") > 0 ? sCurrentLine.substring((sCurrentLine.lastIndexOf("Scenario:") + "Scenario:".length())).trim() :
+               sCurrentLine.lastIndexOf("Scenario Outline:") > 0 ? sCurrentLine.substring((sCurrentLine.lastIndexOf("Scenario Outline:") + "Scenario Outline:".length())).trim() :
+               "scenario_name_not_found";
     }
 
     public boolean checkParams(String sCurrentLine, String[] params) {
