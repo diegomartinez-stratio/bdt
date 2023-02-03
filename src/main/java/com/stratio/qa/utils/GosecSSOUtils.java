@@ -114,9 +114,8 @@ public class GosecSSOUtils {
 
         HttpClient client = clientBuilder.build();
         try {
+            // 1. GET request to login endpoint --> URL with redirect
             HttpResponse firstResponse = client.execute(httpGet, context);
-
-            logger.debug(firstResponse.getStatusLine().toString());
             Document doc = Jsoup.parse(getStringFromIS(firstResponse.getEntity().getContent()));
             Elements code = doc.select("[name=lt]");
             String loginCode = code.attr("value");
@@ -127,46 +126,73 @@ public class GosecSSOUtils {
 
             URI redirect = context.getRedirectLocations().get(context.getRedirectLocations().size() - 1);
 
-            List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("_eventId", "submit"));
-            params.add(new BasicNameValuePair("submit", "LOGIN"));
-            params.add(new BasicNameValuePair("username", userName));
-            params.add(new BasicNameValuePair("password", passWord));
+            // 2. POST request to URL with redirects
+            HttpResponse secondResponse = postToLogin(client, redirect, context, loginCode, executionCode);
 
-            if (tenant != null) {
-                params.add(new BasicNameValuePair("tenant", tenant));
-                params.add(new BasicNameValuePair("customFields[tenant]", tenant));
-            }
+            // 3. POST request to accept cookies (to URL with redirects)
+            postToLoginToAcceptTyC(client, secondResponse, redirect, context);
 
-            params.add(new BasicNameValuePair("lt", loginCode));
-            params.add(new BasicNameValuePair("execution", executionCode));
-            HttpPost httpPost = new HttpPost(redirect);
-            httpPost.setEntity(new UrlEncodedFormEntity(params));
-            HttpResponse secondResponse = client.execute(httpPost, context);
-
-            for (Header oneHeader : secondResponse.getAllHeaders()) {
-                logger.debug(oneHeader.getName() + ":" + oneHeader.getValue());
-            }
-
-            HttpGet getRequest;
-            if (governance != null) {
-                if (ThreadProperty.get("isKeosEnv") != null && ThreadProperty.get("isKeosEnv").equals("true")) {
-                    getRequest = new HttpGet(protocol + ssoHost + governanceKeosProfileHost);
-                } else {
-                    getRequest = new HttpGet(protocol + ssoHost + governanceProfileHost);
-                }
-            } else {
-                getRequest = new HttpGet(protocol + ssoHost + managementHost);
-            }
-            client.execute(getRequest, context);
-            for (Cookie oneCookie : context.getCookieStore().getCookies()) {
-                logger.debug(oneCookie.getName() + ":" + oneCookie.getValue());
-                cookieToken.put(oneCookie.getName(), oneCookie.getValue());
-            }
-
+            // 4. GET request to obtain cookies
+            cookieToken = getCookies(client, context);
         } catch (Exception e) {
-            logger.debug(e.getMessage());
+            logger.error(e.getMessage(), e);
             e.getStackTrace();
+        }
+        return cookieToken;
+    }
+
+    private HttpResponse postToLogin(HttpClient client, URI redirect, HttpClientContext context, String loginCode, String executionCode) throws IOException {
+        List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("_eventId", "submit"));
+        params.add(new BasicNameValuePair("submit", "LOGIN"));
+        params.add(new BasicNameValuePair("username", userName));
+        params.add(new BasicNameValuePair("password", passWord));
+
+        if (tenant != null) {
+            params.add(new BasicNameValuePair("tenant", tenant));
+            params.add(new BasicNameValuePair("customFields[tenant]", tenant));
+        }
+
+        params.add(new BasicNameValuePair("lt", loginCode));
+        params.add(new BasicNameValuePair("execution", executionCode));
+        HttpPost httpPost = new HttpPost(redirect);
+        httpPost.setEntity(new UrlEncodedFormEntity(params));
+        HttpResponse secondResponse = client.execute(httpPost, context);
+        for (Header oneHeader : secondResponse.getAllHeaders()) {
+            logger.debug(oneHeader.getName() + ":" + oneHeader.getValue());
+        }
+        return secondResponse;
+    }
+
+    private void postToLoginToAcceptTyC(HttpClient client, HttpResponse secondResponse, URI redirect, HttpClientContext context) throws IOException {
+        Document doc = Jsoup.parse(getStringFromIS(secondResponse.getEntity().getContent()));
+        String executionCode = doc.select("[name=execution]").attr("value");
+        List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("_eventId", "submit"));
+        params.add(new BasicNameValuePair("submit", "Accept"));
+        params.add(new BasicNameValuePair("execution", executionCode));
+        HttpPost httpPost = new HttpPost(redirect);
+        httpPost.setEntity(new UrlEncodedFormEntity(params));
+        client.execute(httpPost, context);
+    }
+
+    private HashMap<String, String> getCookies(HttpClient client, HttpClientContext context) throws IOException {
+        HashMap<String, String> cookieToken = new HashMap<>();
+        String protocol = "https://";
+        HttpGet getRequest;
+        if (governance != null) {
+            if (ThreadProperty.get("isKeosEnv") != null && ThreadProperty.get("isKeosEnv").equals("true")) {
+                getRequest = new HttpGet(protocol + ssoHost + governanceKeosProfileHost);
+            } else {
+                getRequest = new HttpGet(protocol + ssoHost + governanceProfileHost);
+            }
+        } else {
+            getRequest = new HttpGet(protocol + ssoHost + managementHost);
+        }
+        client.execute(getRequest, context);
+        for (Cookie oneCookie : context.getCookieStore().getCookies()) {
+            logger.debug(oneCookie.getName() + ":" + oneCookie.getValue());
+            cookieToken.put(oneCookie.getName(), oneCookie.getValue());
         }
         return cookieToken;
     }
