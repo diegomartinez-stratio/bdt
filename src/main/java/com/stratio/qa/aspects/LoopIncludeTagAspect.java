@@ -154,9 +154,9 @@ public class LoopIncludeTagAspect {
 
         String scenName = s.substring((s.lastIndexOf("scenario:") + "scenario:".length()));
         if (s.contains("params:")) {
-            scenName = scenName.substring(0, scenName.indexOf(","));
+            scenName = scenName.substring(0, scenName.lastIndexOf(","));
         } else {
-            scenName = scenName.substring(0, scenName.indexOf(")"));
+            scenName = scenName.substring(0, scenName.lastIndexOf(")"));
         }
 
         return scenName.trim();
@@ -204,7 +204,7 @@ public class LoopIncludeTagAspect {
 
             bufferedFeature = new BufferedReader(new FileReader(feature));
             while ((sCurrentLine = bufferedFeature.readLine()) != null) {
-                if (sCurrentLine.contains(scenarioName)) {
+                if (sCurrentLine.contains("Scenario") && sCurrentLine.split("(Scenario:|Scenario Outline:)")[1].trim().equals(scenarioName)) {
                     scenarioexists = true;
                     if (sCurrentLine.toUpperCase().contains("OUTLINE") && params == null) {
                         throw new IncludeException("->  Parameters were not given for this scenario outline.");
