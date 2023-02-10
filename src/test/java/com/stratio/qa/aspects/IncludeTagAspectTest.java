@@ -204,4 +204,17 @@ public class IncludeTagAspectTest {
         assertThat(lines.get(1)).as("Test that Scenario line was moved to first include line").isEqualTo("Scenario: Scenario with include");
         assertThat(lines).as("Test that array doesn't contains @include tag").doesNotContain("@include");
     }
+
+    @Test
+    public void testParseLinesScenarioWithBracketsAndMoreParamsdos() throws IncludeException {
+        String[] originalFeature = new String[]
+                {"Feature: Test",
+                        "@include(feature:includeTemplate.feature,scenario:prueba test include con comas y params, dos, params:[paramtest:2,paramtest2:3])",
+                        "Scenario: Scenario with include",
+                        "Given I run 'echo 1' locally"};
+        List<String> lines = new ArrayList<>(Arrays.asList(originalFeature));
+        inctag.parseLines(lines, "src/test/resources/features/");
+        assertThat(lines.get(1)).as("Test that Scenario line was moved to first include line").isEqualTo("Scenario: Scenario with include");
+        assertThat(lines).as("Test that array doesn't contains @include tag").doesNotContain("@include");
+    }
 }

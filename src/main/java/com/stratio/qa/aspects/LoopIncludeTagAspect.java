@@ -154,7 +154,7 @@ public class LoopIncludeTagAspect {
 
         String scenName = s.substring((s.lastIndexOf("scenario:") + "scenario:".length()));
         if (s.contains("params:")) {
-            scenName = scenName.substring(0, scenName.lastIndexOf(","));
+            scenName = scenName.split("(,\\s?params)")[0];
         } else {
             scenName = scenName.substring(0, scenName.lastIndexOf(")"));
         }
