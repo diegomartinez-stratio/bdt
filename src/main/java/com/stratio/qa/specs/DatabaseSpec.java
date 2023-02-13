@@ -868,6 +868,9 @@ public class DatabaseSpec extends BaseGSpec {
             Statement myStatement = myConnection.createStatement();
             myStatement.execute(query);
             myStatement.close();
+            if (exceptionReturned != null) {
+                fail("Query was executed successfully but we expected an exception");
+            }
         } catch (Exception e) {
             if (exceptionReturned == null) {
                 fail("Error executing query -> " + e.getMessage());
