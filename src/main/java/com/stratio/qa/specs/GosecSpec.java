@@ -2136,6 +2136,35 @@ public class GosecSpec extends BaseGSpec {
         assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(201);
         new File(System.getProperty("user.dir") + "/target/test-classes/ldapSync.conf").delete();
     }
+
+    @When("^I get id from profile structure with name '(.+?)' and save it in environment variable '(.+?)'$")
+    public void getProfilingStructureId(String name, String envVar) throws Exception {
+        Boolean content = false;
+        String endPointGetAllStructures = "/gosec/baas/management/profiling/structure/application";
+
+        restSpec.sendRequestNoDataTable("GET", endPointGetAllStructures, null, null, null);
+        if (commonspec.getResponse().getStatusCode() == 200) {
+            JsonArray jsonAllStructures = (JsonArray) (JsonValue.readHjson(commonspec.getResponse().getResponse()));
+
+            for (int i = 0; i < jsonAllStructures.size(); i++) {
+                String jsonName = ((JsonObject) jsonAllStructures.get(i)).getString("name", "");
+                String jsonId = ((JsonObject) jsonAllStructures.get(i)).getString("id", "");
+
+                if (jsonName.equals(name)) {
+                    ThreadProperty.set(envVar, jsonId);
+                    commonspec.getLogger().warn("Profile Structure Id={}", ThreadProperty.get(envVar));
+                    content = true;
+                    break;
+                }
+            }
+            if (!content) {
+                commonspec.getLogger().warn("Profile structure:{} does not exist", name);
+            }
+
+        } else {
+            commonspec.getLogger().error("Error getting profile structures");
+        }
+    }
 }
 
 
