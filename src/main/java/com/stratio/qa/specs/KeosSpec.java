@@ -61,7 +61,7 @@ public class KeosSpec extends BaseGSpec {
      * @param pathWithoutLogin : whether to remove /login or keep it
      * @throws Exception exception
      */
-    @Given("^I set sso( governance| discovery | intelligence)? keos token using host '(.+?)' with user '(.+?)', password '(.+?)' and tenant '(.+?)'( without host name verification)?( without login path)?$")
+    @Given("^I set sso( governance| discovery| intelligence)? keos token using host '(.+?)' with user '(.+?)', password '(.+?)' and tenant '(.+?)'( without host name verification)?( without login path)?$")
     public void setGoSecSSOCookieKeos(String token_type, String ssoHost, String userName, String password, String tenant, String hostVerifier, String pathWithoutLogin) throws Exception {
         GosecSSOUtils ssoUtils = new GosecSSOUtils(ssoHost, userName, password, tenant, token_type);
         ssoUtils.setVerifyHost(hostVerifier == null);
