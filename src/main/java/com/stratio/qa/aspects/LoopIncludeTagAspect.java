@@ -99,6 +99,7 @@ public class LoopIncludeTagAspect {
                 }
 
                 //TODO: Simplify code
+                StringBuilder sb = new StringBuilder();
                 for (int lineAfterInclude = lineOriginalFeature; lineAfterInclude < lines.size(); lineAfterInclude++) {
                     if (lines.get(lineAfterInclude).toUpperCase().contains("FEATURE:") && !lines.get(lineAfterInclude).toUpperCase().contains("@INCLUDE")) {
                         for (int indexForBackground = lineAfterInclude; indexForBackground < lines.size(); indexForBackground++) {
@@ -119,7 +120,7 @@ public class LoopIncludeTagAspect {
                         }
                     }
                     if ((lines.get(lineAfterInclude).toUpperCase().contains("SCENARIO:") || lines.get(lineAfterInclude).toUpperCase().contains("OUTLINE:")) && !lines.get(lineAfterInclude).toUpperCase().contains("@INCLUDE")) {
-                        lines.set(lineOriginalFeature, lines.get(lineAfterInclude));
+                        lines.set(lineOriginalFeature, sb + lines.get(lineAfterInclude));
                         lines.set(lineAfterInclude, lineToinclude);
                         lineToinclude = lines.get(lineOriginalFeature);
                         for (int lineAux = lineOriginalFeature + 1; lineAux < lineAfterInclude; lineAux++) {
@@ -129,6 +130,10 @@ public class LoopIncludeTagAspect {
                             }
                         }
                         break;
+                    }
+                    if (!lines.get(lineAfterInclude).isEmpty()) {
+                        sb.append(lines.get(lineAfterInclude)).append("\n");
+                        lines.set(lineAfterInclude, "");
                     }
                 }
 
