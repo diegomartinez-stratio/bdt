@@ -714,7 +714,7 @@ public class GosecSpec extends BaseGSpec {
         if (ThreadProperty.get("isKeosEnv") != null && ThreadProperty.get("isKeosEnv").equals("true")) {
             endPointGetAllUsers = "/gosec/identities/identities/users";
             endPointGetAllGroups = "/gosec/identities/identities/groups";
-            endPointTenant = "/gosec/identities/identities/tenants/" + tenantId;
+            endPointTenant = "/gosec/baas/management/tenant?tid=" + tenantId;
         }
 
         assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
@@ -741,9 +741,9 @@ public class GosecSpec extends BaseGSpec {
                         commonspec.getLogger().debug("{} is already included in tenant", resourceId);
                     } else {
                         ((JsonArray) jsonTenantInfo.get(uidOrGidTenant)).add(resourceId);
-                        Future<Response> response = commonspec.generateRequest("PATCH", false, null, null, endPointTenant, JsonValue.readHjson(jsonTenantInfo.toString()).toString(), "json", "");
-                        commonspec.setResponse("PATCH", response.get());
-                        if (commonspec.getResponse().getStatusCode() != 204) {
+                        Future<Response> response = commonspec.generateRequest("PUT", false, null, null, endPointTenant, JsonValue.readHjson(jsonTenantInfo.toString()).toString(), "json", "");
+                        commonspec.setResponse("PUT", response.get());
+                        if (commonspec.getResponse().getStatusCode() != 200) {
                             throw new Exception("Error adding " + resource + " " + resourceId + " in tenant " + tenantId + " - Status code: " + commonspec.getResponse().getStatusCode());
                         }
                     }
@@ -2166,5 +2166,4 @@ public class GosecSpec extends BaseGSpec {
         }
     }
 }
-
 
