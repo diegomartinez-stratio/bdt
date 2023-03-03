@@ -856,20 +856,33 @@ public class DatabaseSpec extends BaseGSpec {
      * @param query
      * executes query in database
      */
-    @When("^I execute query '(.+?)' through JDBC connection(, returning an exception)?( with message \"(.+?)\")?$")
-    public void executeJdbcQuery(String query, String exceptionReturned, String exceptionMessageExpected) throws Exception {
+    @When("^I execute query '(.+?)' through JDBC connection(, returning an exception)?(, returning a warning)?( with message \"(.+?)\")?$")
+    public void executeJdbcQuery(String query, String exceptionReturned, String warningReturned, String exceptionMessageExpected) throws Exception {
         Connection myConnection = this.commonspec.getConnection();
         if (myConnection == null) {
             throw new Exception("JDBC connection is not opened");
         }
         try {
+            String warningMessage = null;
             ThreadProperty.remove("querysize");
             getCommonSpec().setPreviousSqlResult(null);
             Statement myStatement = myConnection.createStatement();
             myStatement.execute(query);
+
+            if (warningReturned != null) {
+                if (myStatement.getWarnings() != null) {
+                    warningMessage = myStatement.getWarnings().toString();
+                } else {
+                    fail("Query was executed successfully but we expected a warning");
+                }
+            }
+
             myStatement.close();
             if (exceptionReturned != null) {
                 fail("Query was executed successfully but we expected an exception");
+            }
+            if (warningReturned != null && exceptionMessageExpected != null) {
+                Assertions.assertThat(warningMessage).contains(exceptionMessageExpected);
             }
         } catch (Exception e) {
             if (exceptionReturned == null) {
