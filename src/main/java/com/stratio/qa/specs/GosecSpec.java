@@ -710,11 +710,15 @@ public class GosecSpec extends BaseGSpec {
         String endPointGetAllUsers = "/service/gosec-identities-daas/identities/users";
         String endPointGetAllGroups = "/service/gosec-identities-daas/identities/groups";
         String endPointTenant = "/service/gosec-identities-daas/identities/tenants/" + tenantId;
+        String requestOp = "PATCH";
+        Integer expectedStatusCode = 204;
 
         if (ThreadProperty.get("isKeosEnv") != null && ThreadProperty.get("isKeosEnv").equals("true")) {
-            endPointGetAllUsers = "/gosec/identities/identities/users";
-            endPointGetAllGroups = "/gosec/identities/identities/groups";
+            endPointGetAllUsers = "/gosec/baas/management/users";
+            endPointGetAllGroups = "/gosec/baas/management/groups";
             endPointTenant = "/gosec/baas/management/tenant?tid=" + tenantId;
+            requestOp = "PUT";
+            expectedStatusCode = 200;
         }
 
         assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
@@ -741,9 +745,9 @@ public class GosecSpec extends BaseGSpec {
                         commonspec.getLogger().debug("{} is already included in tenant", resourceId);
                     } else {
                         ((JsonArray) jsonTenantInfo.get(uidOrGidTenant)).add(resourceId);
-                        Future<Response> response = commonspec.generateRequest("PUT", false, null, null, endPointTenant, JsonValue.readHjson(jsonTenantInfo.toString()).toString(), "json", "");
-                        commonspec.setResponse("PUT", response.get());
-                        if (commonspec.getResponse().getStatusCode() != 200) {
+                        Future<Response> response = commonspec.generateRequest(requestOp, false, null, null, endPointTenant, JsonValue.readHjson(jsonTenantInfo.toString()).toString(), "json", "");
+                        commonspec.setResponse(requestOp, response.get());
+                        if (commonspec.getResponse().getStatusCode() != expectedStatusCode) {
                             throw new Exception("Error adding " + resource + " " + resourceId + " in tenant " + tenantId + " - Status code: " + commonspec.getResponse().getStatusCode());
                         }
                     }
