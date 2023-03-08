@@ -2144,7 +2144,7 @@ public class GosecSpec extends BaseGSpec {
     @When("^I get id from profile structure with name '(.+?)' and save it in environment variable '(.+?)'$")
     public void getProfilingStructureId(String name, String envVar) throws Exception {
         Boolean content = false;
-        String endPointGetAllStructures = "/gosec/baas/management/profiling/structure/application";
+        String endPointGetAllStructures = "/gosec/baas/management/profiling/application";
 
         restSpec.sendRequestNoDataTable("GET", endPointGetAllStructures, null, null, null);
         if (commonspec.getResponse().getStatusCode() == 200) {
@@ -2167,6 +2167,23 @@ public class GosecSpec extends BaseGSpec {
 
         } else {
             commonspec.getLogger().error("Error getting profile structures");
+        }
+    }
+
+    @When("^I get rid from role with name '(.+?)' and save it in environment variable '(.+?)'$")
+    public void getRidRole(String roleName, String envVar) throws Exception {
+        Boolean content = false;
+        String endPointGetRole = "/gosec/baas/management/profiling/roles?name=" + roleName;
+
+        restSpec.sendRequestNoDataTable("GET", endPointGetRole, null, null, null);
+        if (commonspec.getResponse().getStatusCode() == 200) {
+            commonspec.runLocalCommand("echo '" + commonspec.getResponse().getResponse() + "' | jq '.list[] | select (.name == \"" + roleName + "\").rid' | sed s/\\\"//g");
+            commonspec.runCommandLoggerAndEnvVar(0, envVar, Boolean.TRUE);
+            if (ThreadProperty.get(envVar) == null || ThreadProperty.get(envVar).trim().equals("")) {
+                fail("Error obtaining rid from role " + roleName);
+            }
+        } else {
+            commonspec.getLogger().warn("Role with rid: {} does not exist", roleName);
         }
     }
 }
