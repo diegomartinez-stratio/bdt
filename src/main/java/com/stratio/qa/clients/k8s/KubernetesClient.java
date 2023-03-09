@@ -110,11 +110,19 @@ public class KubernetesClient {
         }
 
         boolean setKubernetesHost = false;
+        String keosJson = "";
 
         if (System.getProperty("CLUSTER_KUBE_CONFIG_PATH") != null) {
             ThreadProperty.set("CLUSTER_KUBE_CONFIG_PATH", System.getProperty("CLUSTER_KUBE_CONFIG_PATH"));
             ThreadProperty.set("CLUSTER_SSH_USER", System.getProperty("CLUSTER_SSH_USER") != null ? System.getProperty("CLUSTER_SSH_USER") : "NotSet");
             ThreadProperty.set("CLUSTER_SSH_PEM_PATH", System.getProperty("CLUSTER_SSH_PEM_PATH") != null ? System.getProperty("CLUSTER_SSH_PEM_PATH") : "NotSet");
+            getInstance().connect(ThreadProperty.get("CLUSTER_KUBE_CONFIG_PATH"));
+            String podName = getPodsFilteredByLabel("app.kubernetes.io/instance=keos-operator,app.kubernetes.io/name=keos-operator", "keos-ops");
+            copyFileFromPod(podName, "keos-ops", "/workspace/keos.yaml", "target/test-classes/keos.yaml");
+            FileSpec fileSpec = new FileSpec(commonspec);
+            // Obtain and export values
+            fileSpec.convertYamlToJson("keos.yaml", "keos.json");
+            keosJson = commonspec.retrieveData("keos.json", "json");
         } else {
             String daedalusSystem = "keos-workspaces.int.stratio.com";
             String workspaceName = "keos-workspace-" + clusterName;
@@ -134,122 +142,24 @@ public class KubernetesClient {
             commandExecutionSpec.executeLocalCommand(commandRmTgz, null, null);
 
             // Obtain and export values
+            loadVariablesFromClusterVersions(commonspec, workspaceName);
+
             FileSpec fileSpec = new FileSpec(commonspec);
-            if (new File("target/test-classes/" + workspaceName + "/cluster_versions.yaml").exists()) {
-                fileSpec.convertYamlToJson(workspaceName + "/cluster_versions.yaml", workspaceName + "/cluster_versions.json");
-                String clusterVersionsJson = commonspec.retrieveData(workspaceName + "/cluster_versions.json", "json");
-
-                if (System.getProperty("KEOS_VERSION") == null) {
-                    System.setProperty("KEOS_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.clusterVersions.keosVersion", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-                }
-                if (System.getProperty("UNIVERSE_VERSION") == null) {
-                    System.setProperty("UNIVERSE_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.clusterVersions.universeVersion", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-                }
-            } else if (new File("target/test-classes/" + workspaceName + "/cluster.yaml").exists()) {
-                fileSpec.convertYamlToJson(workspaceName + "/cluster.yaml", workspaceName + "/cluster.json");
-                String clusterVersionsJson = commonspec.retrieveData(workspaceName + "/cluster.json", "json");
-
-                if (System.getProperty("KEOS_VERSION") == null) {
-                    System.setProperty("KEOS_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.keos.version", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-                }
-            }
-
             // Obtain and export values
             if (!new File("target/test-classes/" + workspaceName + "/keos.json").exists()) {
                 fileSpec.convertYamlToJson(workspaceName + "/keos.yaml", workspaceName + "/keos.json");
             }
-            String keosJson = commonspec.retrieveData(workspaceName + "/keos.json", "json");
-            ThreadProperty.set("CLUSTER_SSH_USER", commonspec.getJSONPathString(keosJson, "$.infra.ssh_user", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-
-            if (System.getProperty("KEOS_VERSION") == null) {
-                throw new Exception("cluster_versions.yaml or cluster.yaml not found, so KEOS_VERSION must be defined");
-            }
-            ThreadProperty.set("keosVersion", System.getProperty("KEOS_VERSION"));
-            if (System.getProperty("KEOS_VERSION").contains("-")) {
-                ThreadProperty.set("keosVersion", System.getProperty("KEOS_VERSION").substring(0, System.getProperty("KEOS_VERSION").indexOf("-")));
-            }
-            RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
-            if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(keosVersion<0.5.0)"))) {
-                ThreadProperty.set("KEOS_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-
-                ThreadProperty.set("ADMIN_VHOST", "admin" + "." + ThreadProperty.get("KEOS_DOMAIN"));
-                ThreadProperty.set("ADMIN_BASEPATH", "/");
-                ThreadProperty.set("SIS_VHOST", "sis" + "." + ThreadProperty.get("KEOS_DOMAIN"));
-                ThreadProperty.set("SIS_BASEPATH", "/sso");
-
-                if (commonspec.getJSONPathString(keosJson, "$.keos.~", null).contains("auth")) {
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.~", null).contains("vHost")) {
-                        ThreadProperty.set("ADMIN_VHOST", commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.vHost", null).replaceAll("\"", "") + ThreadProperty.get("KEOS_DOMAIN"));
-                    }
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.~", null).contains("basepath")) {
-                        ThreadProperty.set("ADMIN_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.basepath", null).replaceAll("\"", ""));
-                    }
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.~", null).contains("vHost")) {
-                        ThreadProperty.set("SIS_VHOST", commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.vHost", null).replaceAll("\"", "") + ThreadProperty.get("KEOS_DOMAIN"));
-                    }
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.~", null).contains("basepath")) {
-                        ThreadProperty.set("SIS_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.basepath", null).replaceAll("\"", ""));
-                    }
-                }
-            }
-
-            if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(keosVersion>0.5.0||keosVersion=0.5.0)"))) {
-                try {
-                    ThreadProperty.set("KEOS_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-                } catch (PathNotFoundException e) {
-                    ThreadProperty.set("KEOS_DOMAIN", System.getProperty("KEOS_DOMAIN", System.getProperty("KEOS_CLUSTER_ID") + "." + "int"));
-                }
-
-                try {
-                    ThreadProperty.set("KEOS_EXTERNAL_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.external_domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-                } catch (PathNotFoundException e) {
-                    ThreadProperty.set("KEOS_EXTERNAL_DOMAIN", System.getProperty("KEOS_EXTERNAL_DOMAIN", System.getProperty("KEOS_CLUSTER_ID") + "." + "ext"));
-                }
-
-                try {
-                    ThreadProperty.set("KEOS_EXTERNAL_REGISTRY", commonspec.getJSONPathString(keosJson, "$.external_registry.url", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
-                } catch (PathNotFoundException e) {
-                    ThreadProperty.set("KEOS_EXTERNAL_REGISTRY", System.getProperty("KEOS_EXTERNAL_REGISTRY", "qa.int.stratio.com"));
-                }
-
-                ThreadProperty.set("ADMIN_SUBDOMAIN", "admin");
-                ThreadProperty.set("ADMIN_BASEPATH", "/");
-                ThreadProperty.set("SIS_SUBDOMAIN", "sis");
-                ThreadProperty.set("SIS_BASEPATH", "/sso");
-
-                if (commonspec.getJSONPathString(keosJson, "$.keos.~", null).contains("ingress")) {
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.~", null).contains("subdomain")) {
-                        ThreadProperty.set("ADMIN_SUBDOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.subdomain", null).replaceAll("\"", ""));
-                    }
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.~", null).contains("basepath")) {
-                        ThreadProperty.set("ADMIN_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.basepath", null).replaceAll("\"", ""));
-                    }
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.~", null).contains("subdomain")) {
-                        ThreadProperty.set("SIS_SUBDOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.subdomain", null).replaceAll("\"", ""));
-                    }
-                    if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.~", null).contains("basepath")) {
-                        ThreadProperty.set("SIS_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.basepath", null).replaceAll("\"", ""));
-                    }
-                }
-
-                ThreadProperty.set("ADMIN_VHOST", ThreadProperty.get("ADMIN_SUBDOMAIN") + "." + ThreadProperty.get("KEOS_EXTERNAL_DOMAIN"));
-                ThreadProperty.set("SIS_VHOST", ThreadProperty.get("SIS_SUBDOMAIN") + "." + ThreadProperty.get("KEOS_EXTERNAL_DOMAIN"));
-
-                ThreadProperty.set("ADMIN_URL", ThreadProperty.get("ADMIN_VHOST") + (ThreadProperty.get("ADMIN_BASEPATH").equals("/") ? "" : ThreadProperty.get("ADMIN_BASEPATH")));
-                ThreadProperty.set("SIS_URL", ThreadProperty.get("SIS_VHOST") + ThreadProperty.get("SIS_BASEPATH"));
-            }
+            keosJson = commonspec.retrieveData(workspaceName + "/keos.json", "json");
 
             ThreadProperty.set("CLUSTER_SSH_PEM_PATH", "./target/test-classes/" + workspaceName + "/key");
             ThreadProperty.set("CLUSTER_KUBE_CONFIG_PATH", "./target/test-classes/" + workspaceName + "/.kube/config");
-            try {
-                commonspec.getJSONPathString(keosJson, "$.keos.calico.service_loadbalancer_pools", null);
-            } catch (Exception e) {
-                setKubernetesHost = true;
-            }
         }
 
         // Connect to Kubernetes
         getInstance().connect(ThreadProperty.get("CLUSTER_KUBE_CONFIG_PATH"));
+
+        // Load variables from keos.yaml
+        setKubernetesHost = loadVariablesFromKeosYaml(commonspec, keosJson);
 
         // Vault values
         getK8sVaultConfig(commonspec);
@@ -274,6 +184,117 @@ public class KubernetesClient {
 
         //Set Gosec label in depployment
         setGosecVariables("gosec-management-baas", "keos-core");
+    }
+
+    private void loadVariablesFromClusterVersions(CommonG commonspec, String workspaceName) throws Exception {
+        FileSpec fileSpec = new FileSpec(commonspec);
+        if (new File("target/test-classes/" + workspaceName + "/cluster_versions.yaml").exists()) {
+            fileSpec.convertYamlToJson(workspaceName + "/cluster_versions.yaml", workspaceName + "/cluster_versions.json");
+            String clusterVersionsJson = commonspec.retrieveData(workspaceName + "/cluster_versions.json", "json");
+
+            if (System.getProperty("KEOS_VERSION") == null) {
+                System.setProperty("KEOS_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.clusterVersions.keosVersion", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+            }
+            if (System.getProperty("UNIVERSE_VERSION") == null) {
+                System.setProperty("UNIVERSE_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.clusterVersions.universeVersion", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+            }
+        } else if (new File("target/test-classes/" + workspaceName + "/cluster.yaml").exists()) {
+            fileSpec.convertYamlToJson(workspaceName + "/cluster.yaml", workspaceName + "/cluster.json");
+            String clusterVersionsJson = commonspec.retrieveData(workspaceName + "/cluster.json", "json");
+
+            if (System.getProperty("KEOS_VERSION") == null) {
+                System.setProperty("KEOS_VERSION", commonspec.getJSONPathString(clusterVersionsJson, "$.keos.version", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+            }
+        }
+    }
+
+    private boolean loadVariablesFromKeosYaml(CommonG commonspec, String keosJson) throws Exception {
+        boolean setKubernetesHost = false;
+        ThreadProperty.set("CLUSTER_SSH_USER", commonspec.getJSONPathString(keosJson, "$.infra.ssh_user", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+
+        if (System.getProperty("KEOS_VERSION") == null) {
+            throw new Exception("cluster_versions.yaml or cluster.yaml not found, so KEOS_VERSION must be defined");
+        }
+        ThreadProperty.set("keosVersion", System.getProperty("KEOS_VERSION"));
+        if (System.getProperty("KEOS_VERSION").contains("-")) {
+            ThreadProperty.set("keosVersion", System.getProperty("KEOS_VERSION").substring(0, System.getProperty("KEOS_VERSION").indexOf("-")));
+        }
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(keosVersion<0.5.0)"))) {
+            ThreadProperty.set("KEOS_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+
+            ThreadProperty.set("ADMIN_VHOST", "admin" + "." + ThreadProperty.get("KEOS_DOMAIN"));
+            ThreadProperty.set("ADMIN_BASEPATH", "/");
+            ThreadProperty.set("SIS_VHOST", "sis" + "." + ThreadProperty.get("KEOS_DOMAIN"));
+            ThreadProperty.set("SIS_BASEPATH", "/sso");
+
+            if (commonspec.getJSONPathString(keosJson, "$.keos.~", null).contains("auth")) {
+                if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.~", null).contains("vHost")) {
+                    ThreadProperty.set("ADMIN_VHOST", commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.vHost", null).replaceAll("\"", "") + ThreadProperty.get("KEOS_DOMAIN"));
+                }
+                if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.~", null).contains("basepath")) {
+                    ThreadProperty.set("ADMIN_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.auth.admin.basepath", null).replaceAll("\"", ""));
+                }
+                if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.~", null).contains("vHost")) {
+                    ThreadProperty.set("SIS_VHOST", commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.vHost", null).replaceAll("\"", "") + ThreadProperty.get("KEOS_DOMAIN"));
+                }
+                if (commonspec.getJSONPathString(keosJson, "$.keos.auth.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.~", null).contains("basepath")) {
+                    ThreadProperty.set("SIS_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.auth.sis.basepath", null).replaceAll("\"", ""));
+                }
+            }
+        }
+
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(keosVersion>0.5.0||keosVersion=0.5.0)"))) {
+            try {
+                ThreadProperty.set("KEOS_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+            } catch (PathNotFoundException e) {
+                ThreadProperty.set("KEOS_DOMAIN", System.getProperty("KEOS_DOMAIN", System.getProperty("KEOS_CLUSTER_ID") + "." + "int"));
+            }
+
+            try {
+                ThreadProperty.set("KEOS_EXTERNAL_DOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.external_domain", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+            } catch (PathNotFoundException e) {
+                ThreadProperty.set("KEOS_EXTERNAL_DOMAIN", System.getProperty("KEOS_EXTERNAL_DOMAIN", System.getProperty("KEOS_CLUSTER_ID") + "." + "ext"));
+            }
+
+            try {
+                ThreadProperty.set("KEOS_EXTERNAL_REGISTRY", commonspec.getJSONPathString(keosJson, "$.external_registry.url", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+            } catch (PathNotFoundException e) {
+                ThreadProperty.set("KEOS_EXTERNAL_REGISTRY", System.getProperty("KEOS_EXTERNAL_REGISTRY", "qa.int.stratio.com"));
+            }
+
+            ThreadProperty.set("ADMIN_SUBDOMAIN", "admin");
+            ThreadProperty.set("ADMIN_BASEPATH", "/");
+            ThreadProperty.set("SIS_SUBDOMAIN", "sis");
+            ThreadProperty.set("SIS_BASEPATH", "/sso");
+
+            if (commonspec.getJSONPathString(keosJson, "$.keos.~", null).contains("ingress")) {
+                if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.~", null).contains("subdomain")) {
+                    ThreadProperty.set("ADMIN_SUBDOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.subdomain", null).replaceAll("\"", ""));
+                }
+                if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("admin") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.~", null).contains("basepath")) {
+                    ThreadProperty.set("ADMIN_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.ingress.admin.basepath", null).replaceAll("\"", ""));
+                }
+                if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.~", null).contains("subdomain")) {
+                    ThreadProperty.set("SIS_SUBDOMAIN", commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.subdomain", null).replaceAll("\"", ""));
+                }
+                if (commonspec.getJSONPathString(keosJson, "$.keos.ingress.~", null).contains("sis") && commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.~", null).contains("basepath")) {
+                    ThreadProperty.set("SIS_BASEPATH", commonspec.getJSONPathString(keosJson, "$.keos.ingress.sis.basepath", null).replaceAll("\"", ""));
+                }
+            }
+
+            ThreadProperty.set("ADMIN_VHOST", ThreadProperty.get("ADMIN_SUBDOMAIN") + "." + ThreadProperty.get("KEOS_EXTERNAL_DOMAIN"));
+            ThreadProperty.set("SIS_VHOST", ThreadProperty.get("SIS_SUBDOMAIN") + "." + ThreadProperty.get("KEOS_EXTERNAL_DOMAIN"));
+
+            ThreadProperty.set("ADMIN_URL", ThreadProperty.get("ADMIN_VHOST") + (ThreadProperty.get("ADMIN_BASEPATH").equals("/") ? "" : ThreadProperty.get("ADMIN_BASEPATH")));
+            ThreadProperty.set("SIS_URL", ThreadProperty.get("SIS_VHOST") + ThreadProperty.get("SIS_BASEPATH"));
+        }
+        try {
+            commonspec.getJSONPathString(keosJson, "$.keos.calico.service_loadbalancer_pools", null);
+        } catch (Exception e) {
+            setKubernetesHost = true;
+        }
+        return setKubernetesHost;
     }
 
     private void getK8sVaultConfig(CommonG commonspec) throws Exception {
