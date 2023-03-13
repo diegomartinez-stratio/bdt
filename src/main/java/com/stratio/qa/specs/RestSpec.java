@@ -17,6 +17,7 @@
 package com.stratio.qa.specs;
 
 import io.netty.handler.codec.http.HttpHeaders;
+import org.apache.commons.io.FileUtils;
 import org.asynchttpclient.Response;
 import com.stratio.qa.assertions.Assertions;
 import com.stratio.qa.utils.ThreadProperty;
@@ -454,6 +455,11 @@ public class RestSpec extends BaseGSpec {
         } else {
             fail("No environment variable neither file defined");
         }
+    }
+
+    @Then("^I save file '(.*?)' from response$")
+    public void saveFileFromResponse(String fileName) throws Exception {
+        FileUtils.copyInputStreamToFile(commonspec.getResponse().getInputStream(), new File(fileName));
     }
 
     @Then("^I save service response headers( in environment variable '(.*?)')?( in file '(.*?)')?$")

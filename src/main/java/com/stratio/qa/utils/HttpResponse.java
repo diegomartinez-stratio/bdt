@@ -19,6 +19,7 @@ package com.stratio.qa.utils;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.cookie.Cookie;
 
+import java.io.InputStream;
 import java.util.List;
 
 public class HttpResponse {
@@ -31,6 +32,8 @@ public class HttpResponse {
 
     public HttpHeaders headers;
 
+    private InputStream is;
+
     /**
      * Constructor of an HttpResponse.
      *
@@ -42,6 +45,15 @@ public class HttpResponse {
         this.response = response;
         this.setCookies(cookies);
         this.headers = headers;
+        this.is = null;
+    }
+
+    public HttpResponse(Integer statusCode, String response, List<Cookie> cookies, HttpHeaders headers, InputStream inputStream) {
+        this.statusCode = statusCode;
+        this.response = response;
+        this.setCookies(cookies);
+        this.headers = headers;
+        this.is = inputStream;
     }
 
     public int getStatusCode() {
@@ -72,4 +84,11 @@ public class HttpResponse {
         return headers;
     }
 
+    public InputStream getInputStream() {
+        return is;
+    }
+
+    public void setInputStream(InputStream is) {
+        this.is = is;
+    }
 }

@@ -4,6 +4,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 
 ## 1.0.0 (upcoming)
 
+* [GS-7908] Included Save file from response step
 * [GS-7650] Get profile structure Id from given name
 * [SAAS-6968] Upgrade to Cypress 10.11.0
 
