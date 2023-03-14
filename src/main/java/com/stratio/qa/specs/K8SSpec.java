@@ -131,7 +131,7 @@ public class K8SSpec extends BaseGSpec {
         assertThat(commonspec.kubernetesClient.checkEventNamespace(not, namespace, type, name, reason, message)).as("There aren't event that contains the message " + message + " in namespace " + namespace).isTrue();
     }
 
-    @When("^I describe (pod|service|deployment|configmap|replicaset|serviceaccount|secret|clusterrole|clusterrolebinding|statefulset|role|rolebinding|ingress|persistentVolumeClaims|job) with name '(.+?)'( in namespace '(.+?)')?( in '(yaml|json)' format)?( and save it in environment variable '(.*?)')?( and save it in file '(.*?)')?$")
+    @When("^I describe (pod|service|deployment|configmap|replicaset|serviceaccount|secret|clusterrole|clusterrolebinding|statefulset|role|rolebinding|ingress|persistentVolumeClaims|job|resourcequota) with name '(.+?)'( in namespace '(.+?)')?( in '(yaml|json)' format)?( and save it in environment variable '(.*?)')?( and save it in file '(.*?)')?$")
     public void describeResource(String type, String name, String namespace, String format, String envVar, String fileName) throws Exception {
         String describeResponse;
         format = (format != null) ? format : "yaml";
@@ -180,6 +180,9 @@ public class K8SSpec extends BaseGSpec {
                 break;
             case "job":
                 describeResponse = commonspec.kubernetesClient.describeJobYaml(name, namespace);
+                break;
+            case "resourcequota":
+                describeResponse = commonspec.kubernetesClient.describeResourceQuotaYaml(name, namespace);
                 break;
             default:
                 describeResponse = null;
@@ -515,7 +518,7 @@ public class K8SSpec extends BaseGSpec {
         assertThat(log).contains(expectedLog);
     }
 
-    @When("^I delete (pod|deployment|service|statefulset|job|ingress|configmap|secret) with name '(.+?)' in namespace '(.+?)'$")
+    @When("^I delete (pod|deployment|service|statefulset|job|ingress|configmap|secret|resourcequota) with name '(.+?)' in namespace '(.+?)'$")
     public void deleteResource(String type, String name, String namespace) {
         switch (type) {
             case "pod":
@@ -541,6 +544,9 @@ public class K8SSpec extends BaseGSpec {
                 break;
             case "secret":
                 commonspec.kubernetesClient.deleteSecret(name, namespace);
+                break;
+            case "resourcequota":
+                commonspec.kubernetesClient.deleteResourceQuota(name, namespace);
                 break;
             default:
         }
@@ -859,4 +865,8 @@ public class K8SSpec extends BaseGSpec {
         Assert.assertTrue(fileWasUploadedCorrectly, "The file was not uploaded correctly after 5 attempts");
     }
 
+    @When("^I create resourcequota with name '(.+?)', in namespace '(.+?)'(, with hard cpu '(.+?)')?(, with hard memory '(.+?)')?(, with hard pods '(.+?)')?$")
+    public void createResourceQuota(String name, String namespace, String cpu, String memory, String pods) {
+        commonspec.kubernetesClient.createResourceQuota(name, namespace, cpu, memory, pods);
+    }
 }

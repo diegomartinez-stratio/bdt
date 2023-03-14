@@ -1892,7 +1892,6 @@ public class KubernetesClient {
         k8sClient.rbac().clusterRoleBindings().resource(clusterRoleBindingCreated).createOrReplace();
     }
 
-
     /**
      * Describe job in yaml format
      *
@@ -2085,5 +2084,63 @@ public class KubernetesClient {
         } catch (KubernetesClientException e) {
             logger.error("Error setting GOSEC_LABEL variable", e);
         }
+    }
+
+    /**
+     * Create resourceQuota k8s object
+     * @param rqName Name
+     * @param namespace Namespace
+     * @param cpuQuantity CPU
+     * @param memoryQuantity Memory
+     * @param podsQuantity Pods
+     */
+    public void createResourceQuota(String rqName, String namespace, String cpuQuantity, String memoryQuantity, String podsQuantity) {
+        Map<String, Quantity> rqMap = new HashMap<>();
+        if (cpuQuantity != null) {
+            rqMap.put("cpu", new Quantity(cpuQuantity));
+        }
+        if (memoryQuantity != null) {
+            rqMap.put("memory", new Quantity(memoryQuantity));
+        }
+        if (podsQuantity != null) {
+            rqMap.put("pods", new Quantity(podsQuantity));
+        }
+        ResourceQuota rq = new ResourceQuotaBuilder()
+                .withNewMetadata().withName(rqName).endMetadata()
+                .withNewSpec().addToHard(rqMap).endSpec()
+                .build();
+        k8sClient.resourceQuotas().inNamespace(namespace).resource(rq).createOrReplace();
+    }
+
+    /**
+     * Get ResourceQuota
+     *
+     * @param rqName ResourceQuota name
+     * @param namespace Namespace
+     * @return ResourceQuota
+     */
+    public ResourceQuota getResourceQuota(String rqName, String namespace) {
+        return k8sClient.resourceQuotas().inNamespace(namespace).withName(rqName).get();
+    }
+
+    /**
+     * Describe ResourceQuota in yaml format
+     *
+     * @param rqName   ResourceQuota name
+     * @param namespace Namespace
+     * @return String with ResourceQuota in yaml format
+     */
+    public String describeResourceQuotaYaml(String rqName, String namespace) {
+        return Serialization.asYaml(getResourceQuota(rqName, namespace));
+    }
+
+    /**
+     * Remove ResourceQuota object
+     *
+     * @param rqName ResourceQuota name
+     * @param namespace Namespace
+     */
+    public void deleteResourceQuota(String rqName, String namespace) {
+        k8sClient.resourceQuotas().inNamespace(namespace).withName(rqName).delete();
     }
 }
