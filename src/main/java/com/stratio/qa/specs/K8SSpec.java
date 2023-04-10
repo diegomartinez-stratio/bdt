@@ -810,7 +810,7 @@ public class K8SSpec extends BaseGSpec {
         StringBuilder sbCommand = new StringBuilder();
         sbCommand.append("keos vault write ").append(path);
         for (int i = 0; i < params.cells().size(); i++) {
-            sbCommand.append(" ").append(params.cell(i, 0)).append("=").append(params.cell(i, 1));
+            sbCommand.append(" ").append(params.cell(i, 0)).append("='").append(params.cell(i, 1)).append("'");
         }
         commonspec.getLogger().info("Command: " + sbCommand);
         List<List<String>> command = Arrays.asList(
