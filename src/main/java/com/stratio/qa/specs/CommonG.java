@@ -2165,7 +2165,7 @@ public class CommonG {
                     }
                     break;
                 default:
-                    Assertions.fail("Not implemented condition");
+                    Assertions.fail("Not implemented condition (" + condition + ")");
                     break;
             }
         } else if (o instanceof List) {

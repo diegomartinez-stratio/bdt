@@ -16,6 +16,7 @@
 
 package com.stratio.qa.specs;
 
+import com.jayway.jsonpath.PathNotFoundException;
 import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -221,9 +222,14 @@ public class MiscSpec extends BaseGSpec {
             String expression = row.get(0);
             String condition = row.get(1);
             String result = row.get(2);
-
-            String value = commonspec.getJSONPathString(jsonString, expression, null);
-            commonspec.evaluateJSONElementOperation(value, condition, result);
+            try {
+                String value = commonspec.getJSONPathString(jsonString, expression, null);
+                commonspec.evaluateJSONElementOperation(value, condition, result);
+            } catch (PathNotFoundException e) {
+                if (!condition.equals("PathNotFound")) {
+                    throw e;
+                }
+            }
         }
     }
 
