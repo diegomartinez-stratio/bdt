@@ -16,6 +16,8 @@
 
 package com.stratio.qa.specs;
 
+import com.stratio.qa.aspects.RunOnTagAspect;
+import cucumber.api.java.en.Given;
 import org.asynchttpclient.Response;
 import com.stratio.qa.assertions.Assertions;
 import com.stratio.qa.utils.ThreadProperty;
@@ -52,6 +54,8 @@ public class GosecSpec extends BaseGSpec {
 
     MiscSpec miscSpec;
 
+    K8SSpec k8SSpec;
+
     /**
      * Generic constructor.
      *
@@ -61,6 +65,7 @@ public class GosecSpec extends BaseGSpec {
         this.commonspec = spec;
         restSpec = new RestSpec(spec);
         miscSpec = new MiscSpec(spec);
+        k8SSpec = new K8SSpec(spec);
     }
 
     /**
@@ -2375,6 +2380,77 @@ public class GosecSpec extends BaseGSpec {
         } else {
             commonspec.getLogger().warn("Role with rid: {} does not exist", roleName);
         }
+    }
+
+    @Given("^I create user '(.+?)' with password '(.+?)' in LDAP$")
+    public void createUserLdap(String user, String password) throws Exception {
+        String template = "###################\n" +
+                "###    USERS    ###\n" +
+                "###################\n" +
+                "dn: uid=stratio,$ou_people\n" +
+                "objectClass: top\n" +
+                "objectClass: person\n" +
+                "objectClass: organizationalPerson\n" +
+                "objectClass: inetOrgPerson\n" +
+                "objectClass: posixAccount\n" +
+                "objectClass: shadowAccount\n" +
+                "cn: stratio\n" +
+                "sn: stratio\n" +
+                "uid: stratio\n" +
+                "uidNumber: 65003\n" +
+                "gidNumber: 65001\n" +
+                "givenName: stratio\n" +
+                "homeDirectory: /home/stratio\n" +
+                "loginShell: /bin/false\n" +
+                "displayname: stratio\n" +
+                "mail: stratio@$domain\n" +
+                "userPassword: 1234";
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@skipOnEnv(keosVersion<0.6.0)"))) {
+            throw new Exception("Spec only supports keos version >= 0.6");
+        }
+        k8SSpec.getList("ou_people", "kerberos", "keos-idp", "people_ou", null);
+        template = template.replace("stratio", user).replace("$ou_people", ThreadProperty.get("people_ou")).replace("userPassword: 1234", "userPassword: " + password);
+        writeInFile(template, "ldapuser.template");
+        k8SSpec.copyToRemoteFileWithRetry("target/test-classes/ldapuser.template", "/tmp/ldapuser.template", "ldap-0", "keos-idp", "ldap");
+        List<List<String>> command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList("shtpl < /tmp/ldapuser.template > /tmp/user.ldif")
+        );
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList("source /vault/secrets/idp-secrets ; cat /tmp/user.ldif | ldapadd -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass")
+        );
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+        command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList("rm -f /tmp/*.template /tmp/*.ldif")
+        );
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        assertThat(ThreadProperty.get("output")).as("Log contains query cancelled").contains("adding new entry \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"");
+        Thread.sleep(5000);
+        runLdapSynchronizer("total");
+    }
+
+    @Given("^I delete user '(.+?)' in LDAP$")
+    public void deleteUserLdap(String user) throws Exception {
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@skipOnEnv(keosVersion<0.6.0)"))) {
+            throw new Exception("Spec only supports keos version >= 0.6");
+        }
+        k8SSpec.getList("ou_people", "kerberos", "keos-idp", "people_ou", null);
+        List<List<String>> command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList("source /vault/secrets/idp-secrets ; ldapdelete -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"")
+        );
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+        Thread.sleep(5000);
+        runLdapSynchronizer("total");
     }
 }
 
