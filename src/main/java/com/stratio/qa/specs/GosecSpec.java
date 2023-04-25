@@ -726,7 +726,6 @@ public class GosecSpec extends BaseGSpec {
             expectedStatusCode = 200;
         }
 
-        assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
         String uidOrGid = "uid";
         String uidOrGidTenant = "uids";
         String endPointGosec = endPointGetAllUsers;
@@ -1915,7 +1914,6 @@ public class GosecSpec extends BaseGSpec {
         String rid = "roleId";
         String select = "USERS";
 
-        assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
         String uidOrGid = "uid";
         String usersOrGroups = "users";
         String endPointGosec = endPointGetAllUsers;

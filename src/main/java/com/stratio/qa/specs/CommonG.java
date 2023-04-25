@@ -2639,7 +2639,7 @@ public class CommonG {
             Assert.assertNotNull(keystore_pwd, "Keystore password is mandatory when security is enabled");
             Assert.assertNotNull(truststore_path, "Truststore path is mandatory when security is enabled");
             Assert.assertNotNull(truststore_pwd, "Truststore password is mandatory when security is enabled");
-            jdbcConnection = jdbcConnection + ";SSL=true;KEYSTORE=" + keystore_path +
+            jdbcConnection = jdbcConnection + ";SSL=true;LIMIT=-1;KEYSTORE=" + keystore_path +
                     ";KEYSTORE_PWD=" + keystore_pwd + ";TRUSTSTORE=" + truststore_path + ";TRUSTSTORE_PWD=" + truststore_pwd;
         }
 
