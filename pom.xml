@@ -93,6 +93,7 @@
         <ok-http-client.version>3.12.12</ok-http-client.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <aws.java.sdk.version>2.20.26</aws.java.sdk.version>
     </properties>
     <build>
         <plugins>
@@ -547,6 +548,11 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.31</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>aws-sdk-java</artifactId>
+            <version>${aws.java.sdk.version}</version>
         </dependency>
     </dependencies>
 
