@@ -2334,6 +2334,24 @@ public class GosecSpec extends BaseGSpec {
         new File(System.getProperty("user.dir") + "/target/test-classes/ldapSync.conf").delete();
     }
 
+    public void runLdapSynchronizerWithRetries(String type, int numberOfRetries, int secondsBeetweenRetries) throws Exception {
+        boolean executed = false;
+        while (!executed && numberOfRetries >= 0) {
+            numberOfRetries--;
+            try {
+                runLdapSynchronizer(type);
+                executed = true;
+            } catch (Exception | Error e) {
+                if (numberOfRetries >= 0) {
+                    commonspec.getLogger().warn("Error executing ldap synchronizer, will be retried in " + secondsBeetweenRetries + " seconds");
+                    Thread.sleep(secondsBeetweenRetries * 1000L);
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
     @When("^I get id from profile structure with name '(.+?)' and save it in environment variable '(.+?)'$")
     public void getProfilingStructureId(String name, String envVar) throws Exception {
         Boolean content = false;
@@ -2431,7 +2449,7 @@ public class GosecSpec extends BaseGSpec {
         k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
         assertThat(ThreadProperty.get("output")).as("Log contains query cancelled").contains("adding new entry \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"");
         Thread.sleep(5000);
-        runLdapSynchronizer("total");
+        runLdapSynchronizerWithRetries("total", 5, 10);
     }
 
     @Given("^I delete user '(.+?)' in LDAP$")
@@ -2448,7 +2466,7 @@ public class GosecSpec extends BaseGSpec {
         );
         k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
         Thread.sleep(5000);
-        runLdapSynchronizer("total");
+        runLdapSynchronizerWithRetries("total", 5, 10);
     }
 }
 
