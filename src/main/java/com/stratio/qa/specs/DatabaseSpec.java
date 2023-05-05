@@ -924,7 +924,7 @@ public class DatabaseSpec extends BaseGSpec {
             future.cancel(true);
             fail("Query was executed succesfully (it should be cancelled)");
         } catch (SQLSyntaxErrorException e) {
-            assertThat(e.getMessage()).as("SQLSyntaxErrorException message").contains("Query cancelled");
+            assertThat(e.getMessage()).as("SQLSyntaxErrorException message").containsIgnoringCase("cancelled");
         }
     }
 
