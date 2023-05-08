@@ -2468,5 +2468,29 @@ public class GosecSpec extends BaseGSpec {
         Thread.sleep(5000);
         runLdapSynchronizerWithRetries("total", 5, 10);
     }
+
+    @When("^I get id from domain policy with name '(.+?)'( in tenant '(.+?)')?( with tenant user and tenant password '(.+:.+?)')? and save it in environment variable '(.+?)'$")
+    public void getDomainPolicyId(String policyName, String tenantOrig, String tenantLoginInfo, String envVar) throws Exception {
+        if (ThreadProperty.get("isKeosEnv") != null && ThreadProperty.get("isKeosEnv").equals("true")) {
+            getPolicyDomainIdKeos(policyName, tenantOrig, tenantLoginInfo, envVar);
+        } else {
+            getPolicyDomainIdDcos(policyName, tenantOrig, tenantLoginInfo, envVar);
+        }
+    }
+
+    private void getPolicyDomainIdKeos(String policyName, String tenantOrig, String tenantLoginInfo, String envVar) throws Exception {
+        String baasPath = ThreadProperty.get("KEOS_GOSEC_BAAS_INGRESS_PATH");
+        String endPoint = baasPath + "/management/policies/domains";
+        getPolicyIdCommon(endPoint, policyName, tenantOrig, tenantLoginInfo, envVar);
+    }
+
+    private void getPolicyDomainIdDcos(String policyName, String tenantOrig, String tenantLoginInfo, String envVar) throws Exception {
+        String endPoint = "/service/gosecmanagement" + ThreadProperty.get("API_POLICIES");
+        String managementBaasVersion = ThreadProperty.get("gosec-management-baas_version");
+        if (managementBaasVersion != null) {
+            endPoint = "/service/gosec-management-baas/management/policies/domains";
+        }
+        getPolicyIdCommon(endPoint, policyName, tenantOrig, tenantLoginInfo, envVar);
+    }
 }
 
