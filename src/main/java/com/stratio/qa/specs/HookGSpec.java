@@ -210,6 +210,7 @@ public class HookGSpec extends BaseGSpec {
                 }
                 chromeOptions.addArguments("--no-sandbox");
                 chromeOptions.addArguments("--ignore-certificate-errors");
+                chromeOptions.addArguments("--disable-dev-shm-usage");
                 capabilities = DesiredCapabilities.chrome();
                 capabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
                 break;
