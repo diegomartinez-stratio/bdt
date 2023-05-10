@@ -2451,25 +2451,27 @@ public class CommonG {
                     json.put(key, element.get("default"));
                     // If it doesn't have default value, we assign a default value depending on the type
                 } else {
-                    switch (element.getString("type")) {
-                        case "string":
-                            json.put(key, "");
-                            break;
-                        case "boolean":
-                            json.put(key, false);
-                            break;
-                        case "number":
-                        case "integer":
-                            json.put(key, 0);
-                            break;
-                        case "array":
-                            json.put(key, new ArrayList<>());
-                            break;
-                        case "RollingUpdate":
-                            json.put(key, "");
-                            break;
-                        default:
-                            Assertions.fail("type not expected");
+                    if (element.has("type")) {
+                        switch (element.getString("type")) {
+                            case "string":
+                            case "RollingUpdate":
+                                json.put(key, "");
+                                break;
+                            case "boolean":
+                                json.put(key, false);
+                                break;
+                            case "number":
+                            case "integer":
+                                json.put(key, 0);
+                                break;
+                            case "array":
+                                json.put(key, new ArrayList<>());
+                                break;
+                            default:
+                                Assertions.fail("type not expected");
+                        }
+                    } else {
+                        json.put(key, "");
                     }
                 }
 

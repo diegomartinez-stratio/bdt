@@ -8,6 +8,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [GS-7908] Included Save file from response step
 * [GS-7650] Get profile structure Id from given name
 * [SAAS-6968] Upgrade to Cypress 10.11.0
+* [DGPB-11154] Add support to install a descriptor without type key in a property
 
 ## Previous development
 
