@@ -438,6 +438,23 @@ public class MiscSpec extends BaseGSpec {
     }
 
     /**
+     * Get current date and time plus provided seconds and save into environment variable
+     *
+     * @param envVar        : environment variable where date time is saved
+     * @param addSecondsTime : added seconds
+     */
+    @Given("^I get date and time with '(.+?)' more seconds from now and save the value in environment variable '(.+?)'$")
+    public void getOneMoreSecond(int addSecondsTime, String envVar) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date targetTime = new Date(); //now
+        targetTime = DateUtils.addSeconds(targetTime, addSecondsTime); //add seconds
+        dateFormat.setTimeZone(TimeZone.getTimeZone("Europe/Madrid"));
+        ThreadProperty.set(envVar, dateFormat.format(targetTime));
+        commonspec.getLogger().debug("Date adding {} seconds : {}", addSecondsTime, dateFormat.format(targetTime));
+    }
+
+
+    /**
      * Get JWT for the provided data
      *
      * @param tenant    : environment tenant
