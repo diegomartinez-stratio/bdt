@@ -2492,5 +2492,51 @@ public class GosecSpec extends BaseGSpec {
         }
         getPolicyIdCommon(endPoint, policyName, tenantOrig, tenantLoginInfo, envVar);
     }
-}
 
+    @Given("^I create group '(.+?)' with user '(.+?)' in LDAP$")
+    public void createGroupLdap(String group, String user) throws Exception {
+        String template = "###################\n" +
+                "###    GROUPS    ###\n" +
+                "###################\n" +
+                "dn: cn=stratio,$ou_groups\n" +
+                "objectClass: posixGroup\n" +
+                "objectClass: groupOfnames\n" +
+                "objectClass: top\n" +
+                "cn: stratio\n" +
+                "gidNumber: 65999\n" +
+                "description: stratio group\n" +
+                "member: uid=uid,$ou_people\n" +
+                "memberUid: uid=uid,$ou_people\n";
+
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@skipOnEnv(keosVersion<0.6.0)"))) {
+            throw new Exception("Spec only supports keos version >= 0.6");
+        }
+        k8SSpec.getList("ou_people", "kerberos", "keos-idp", "people_ou", null);
+        k8SSpec.getList("ou_groups", "kerberos", "keos-idp", "groups_ou", null);
+        template = template.replace("stratio", group).replace("$ou_people", ThreadProperty.get("people_ou")).replace("uid=uid", "uid=" + user).replace("$ou_groups", ThreadProperty.get("groups_ou"));
+        writeInFile(template, "ldapgroup.template");
+        k8SSpec.copyToRemoteFileWithRetry("target/test-classes/ldapgroup.template", "/tmp/ldapgroup.template", "ldap-0", "keos-idp", "ldap");
+        List<List<String>> command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList("shtpl < /tmp/ldapgroup.template > /tmp/group.ldif")
+        );
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList("source /vault/secrets/idp-secrets ; cat /tmp/group.ldif | ldapadd -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass")
+        );
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+        command = Arrays.asList(
+                Arrays.asList("sh"),
+                Arrays.asList("-c"),
+                Arrays.asList("rm -f /tmp/*.template /tmp/*.ldif")
+        );
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        assertThat(ThreadProperty.get("output")).as("Log contains query cancelled").contains("adding new entry \"cn=" + group + "," + ThreadProperty.get("groups_ou") + "\"");
+        Thread.sleep(5000);
+        runLdapSynchronizerWithRetries("total", 5, 10);
+    }
+}
