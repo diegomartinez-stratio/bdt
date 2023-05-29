@@ -492,6 +492,16 @@ public class KubernetesClient {
     }
 
     /**
+     * Return pods in namespace
+     *
+     * @param namespace Namespace
+     * @return Pod object
+     */
+    public PodList getPods(String namespace) {
+        return k8sClient.pods().inNamespace(namespace).list();
+    }
+
+    /**
      * Return deployment object
      *
      * @param deploymentName Deployment name
@@ -2142,5 +2152,35 @@ public class KubernetesClient {
      */
     public void deleteResourceQuota(String rqName, String namespace) {
         k8sClient.resourceQuotas().inNamespace(namespace).withName(rqName).delete();
+    }
+
+    /**
+     * Remove ServiceAccount object
+     *
+     * @param serviceAccountName ServiceAccount name
+     * @param namespace Namespace
+     */
+    public void deleteServiceAccount(String serviceAccountName, String namespace) {
+        k8sClient.serviceAccounts().inNamespace(namespace).withName(serviceAccountName).delete();
+    }
+
+    /**
+     * Remove Role object
+     *
+     * @param role Role name
+     * @param namespace Namespace
+     */
+    public void deleteRole(String role, String namespace) {
+        k8sClient.rbac().roles().inNamespace(namespace).withName(role).delete();
+    }
+
+    /**
+     * Remove RoleBinding object
+     *
+     * @param roleBinding RoleBinding name
+     * @param namespace Namespace
+     */
+    public void deleteRoleBinding(String roleBinding, String namespace) {
+        k8sClient.rbac().roleBindings().inNamespace(namespace).withName(roleBinding).delete();
     }
 }

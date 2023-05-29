@@ -518,7 +518,7 @@ public class K8SSpec extends BaseGSpec {
         assertThat(log).contains(expectedLog);
     }
 
-    @When("^I delete (pod|deployment|service|statefulset|job|ingress|configmap|secret|resourcequota) with name '(.+?)' in namespace '(.+?)'$")
+    @When("^I delete (pod|deployment|service|statefulset|job|ingress|configmap|secret|resourcequota|serviceaccount|role|rolebinding) with name '(.+?)' in namespace '(.+?)'$")
     public void deleteResource(String type, String name, String namespace) {
         switch (type) {
             case "pod":
@@ -547,6 +547,15 @@ public class K8SSpec extends BaseGSpec {
                 break;
             case "resourcequota":
                 commonspec.kubernetesClient.deleteResourceQuota(name, namespace);
+                break;
+            case "serviceaccount":
+                commonspec.kubernetesClient.deleteServiceAccount(name, namespace);
+                break;
+            case "role":
+                commonspec.kubernetesClient.deleteRole(name, namespace);
+                break;
+            case "rolebinding":
+                commonspec.kubernetesClient.deleteRoleBinding(name, namespace);
                 break;
             default:
         }
