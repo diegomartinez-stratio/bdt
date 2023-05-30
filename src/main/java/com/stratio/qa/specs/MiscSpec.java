@@ -91,8 +91,8 @@ public class MiscSpec extends BaseGSpec {
      * @throws InvocationTargetException exception
      * @throws NoSuchMethodException     exception
      */
-    @Given("^I save element (in position '(.+?)' in )?'(.+?)' in environment variable '(.+?)'$")
-    public void saveElementEnvironment(String position, String element, String envVar) throws Exception {
+    @Given("^I save element (in position '(.+?)' in )?'(.+?)'( in environment variable '(.+?)')?( in file '(.+?)')?$")
+    public void saveElementEnvironmentFile(String position, String element, String envVar, String file) throws Exception {
         Pattern pattern = Pattern.compile("^((.*)(\\.)+)(\\$.*)$");
         Matcher matcher = pattern.matcher(element);
         String json;
@@ -108,9 +108,18 @@ public class MiscSpec extends BaseGSpec {
 
         String value = commonspec.getJSONPathString(json, parsedElement, position);
 
-        ThreadProperty.set(envVar, value.replaceAll("\n", ""));
+        if (envVar != null) {
+            ThreadProperty.set(envVar, value.replaceAll("\n", ""));
+        }
+        if (file != null) {
+            writeInFile(value.replaceAll("\n", ""), file);
+        }
     }
 
+    @Deprecated
+    public void saveElementEnvironment(String position, String element, String envVar) throws Exception {
+        saveElementEnvironmentFile(position, element, envVar, null);
+    }
 
     /**
      * Save value for future use.
