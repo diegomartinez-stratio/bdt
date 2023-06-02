@@ -16,11 +16,13 @@
 
 package com.stratio.qa.specs;
 
+import com.stratio.qa.utils.CookiesUtils;
 import io.netty.handler.codec.http.cookie.Cookie;
 import com.stratio.qa.utils.GosecSSOUtils;
 import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.java.en.Given;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.json.JSONObject;
 import com.stratio.qa.assertions.Assertions;
 
@@ -97,6 +99,7 @@ public class KeosSpec extends BaseGSpec {
 
         if (ssoCookies.get("stratio-cookie") != null) {
             ThreadProperty.set("stratioCookie", ssoCookies.get("stratio-cookie"));
+            CookiesUtils.addCookiesToCache(ssoHost + "_" + userName + "_" + password + "_" + tenant, cookiesAtributes, ssoCookies.get("stratio-cookie"));
         }
 
         if (ssoCookies.get("user") != null) {
@@ -120,6 +123,19 @@ public class KeosSpec extends BaseGSpec {
         this.commonspec.getLogger().debug("Cookies to set:");
         for (Cookie cookie : cookiesAtributes) {
             this.commonspec.getLogger().debug("\t" + cookie.name() + ":" + cookie.value());
+        }
+    }
+
+    @Given("^I get from cache, if exists, sso( governance| discovery| intelligence)? keos token using host '(.+?)' with user '(.+?)', password '(.+?)' and tenant '(.+?)'( without host name verification)?( without login path)?$")
+    public void setGoSecSSOCookieKeosCache(String token_type, String ssoHost, String userName, String password, String tenant, String hostVerifier, String pathWithoutLogin) throws Exception {
+        long currentTime = System.currentTimeMillis() / 1000;
+        ImmutablePair<Long, List<Cookie>> cookieCache = CookiesUtils.getCookiesFromCache(ssoHost + "_" + userName + "_" + password + "_" + tenant);
+        if (cookieCache == null || (cookieCache.getLeft() - currentTime) < 60) {
+            this.commonspec.getLogger().debug("Cookie expiration is imminent, I get cookie again");
+            setGoSecSSOCookieKeos(token_type, ssoHost, userName, password, tenant, hostVerifier, pathWithoutLogin);
+        } else {
+            this.commonspec.getLogger().debug("Set cookies from cache");
+            commonspec.setCookies(cookieCache.getRight());
         }
     }
 

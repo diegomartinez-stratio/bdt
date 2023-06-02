@@ -17,13 +17,16 @@
 package com.stratio.qa.utils;
 
 import io.netty.handler.codec.http.cookie.Cookie;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class CookiesUtils {
 
     private static List<Cookie> cookies = new ArrayList<>();
+
+    private static Map<String, ImmutablePair<Long, List<Cookie>>> cookiesCache = new HashMap<>();
 
     public static List<Cookie> getCookies() {
         return cookies;
@@ -31,5 +34,21 @@ public class CookiesUtils {
 
     public static void setCookies(List<Cookie> newCookies) {
         cookies = newCookies;
+    }
+
+    public static void addCookiesToCache(String key, List<Cookie> cookiesList, String stratioCookie) {
+        try {
+            String[] chunks = stratioCookie.split("\\.");
+            Base64.Decoder decoder = Base64.getUrlDecoder();
+            JSONObject payload = new JSONObject(new String(decoder.decode(chunks[1])));
+            Long exp = payload.getLong("exp");
+            cookiesCache.put(key, new ImmutablePair<>(exp, cookiesList));
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
+
+    public static ImmutablePair<Long, List<Cookie>> getCookiesFromCache(String key) {
+        return cookiesCache.get(key);
     }
 }
