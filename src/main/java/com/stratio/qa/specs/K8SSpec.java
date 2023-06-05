@@ -30,6 +30,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import org.assertj.core.api.Assertions;
+import org.hjson.JsonObject;
 import org.json.JSONObject;
 import org.testng.Assert;
 
@@ -848,6 +849,50 @@ public class K8SSpec extends BaseGSpec {
         runCommandInPodDatatable(ThreadProperty.get("podKeosOp"), "keos-ops", null, null, "result", null, null, null, null, dataTable);
         commonspec.getLogger().info(ThreadProperty.get("result"));
         Assertions.assertThat(ThreadProperty.get("result")).contains("Success!");
+    }
+
+    @When("I create secret using Vault API in path '(.+?)' with params:")
+    public void createSecretVault(String path, DataTable params) throws Exception {
+        Exception exception = null;
+        setLocalPortForward(8200, 8200, "service", "vault", "keos-core");
+        try {
+            JsonObject jsonObject = new JsonObject();
+            for (int i = 0; i < params.cells().size(); i++) {
+                jsonObject.add(params.cell(i, 0), params.cell(i, 1));
+            }
+            writeInFile(jsonObject.toString(), "secret.json");
+            File tempDirectory = new File(System.getProperty("user.dir") + "/target/test-classes/");
+            String absolutePathFile = tempDirectory.getAbsolutePath() + "/secret.json";
+            String createSecretCommand = "curl -k --header \"X-Vault-Token:" + ThreadProperty.get("VAULT_TOKEN") + "\" --request POST --write-out \"%{http_code}\" --data @" + absolutePathFile + " https://127.0.0.1:8200/v1";
+            commonspec.getLogger().debug("Curl to create secret: " + createSecretCommand + path);
+            commonspec.runLocalCommand(createSecretCommand + path);
+        } catch (Exception e) {
+            exception = e;
+        } finally {
+            closePortForward();
+            if (exception != null) {
+                throw exception;
+            }
+            new File(System.getProperty("user.dir") + "/target/test-classes/secret.json").delete();
+        }
+    }
+
+    @When("I remove secret located in path '(.+?)' using Vault API")
+    public void deleteSecretVault(String path) throws Exception {
+        Exception exception = null;
+        setLocalPortForward(8200, 8200, "service", "vault", "keos-core");
+        try {
+            String removeSecretCommand = "curl -k --header \"X-Vault-Token:" + ThreadProperty.get("VAULT_TOKEN") + "\" --request DELETE --write-out \"%{http_code}\" https://127.0.0.1:8200/v1";
+            commonspec.getLogger().debug("Curl to remove secret: " + removeSecretCommand + path);
+            commonspec.runLocalCommand(removeSecretCommand + path);
+        } catch (Exception e) {
+            exception = e;
+        } finally {
+            closePortForward();
+            if (exception != null) {
+                throw exception;
+            }
+        }
     }
 
     /**
