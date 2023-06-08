@@ -802,6 +802,9 @@ public class CCTSpec extends BaseGSpec {
         int i = 0;
         while (!statusService && i <= timeout) {
             try {
+                if (commonspec.getCookies().size() == 0) {
+                    commonspec.setCCTConnection(null, null);
+                }
                 Future<Response> response = commonspec.generateRequest("GET", false, null, null, endPoint, "", null);
                 commonspec.setResponse(endPoint, response.get());
                 miscSpec.saveElementEnvironment(null, "$.status", "jobStatus");
