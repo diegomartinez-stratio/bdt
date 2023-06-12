@@ -811,6 +811,7 @@ public class CCTSpec extends BaseGSpec {
                 statusService = expectedStatus.equalsIgnoreCase(ThreadProperty.get("jobStatus"));
             } catch (Exception e) {
                 commonspec.getLogger().warn("Error in request " + endPoint + " - " + e);
+                commonspec.setCookies(new ArrayList<>()); // Set to empty list to force new cookies in next iteration
             }
             if (!statusService) {
                 commonspec.getLogger().warn(expectedStatus + " status not found after " + i + " seconds. Current status: " + ThreadProperty.get("jobStatus"));
