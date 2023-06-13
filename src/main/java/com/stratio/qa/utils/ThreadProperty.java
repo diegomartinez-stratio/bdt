@@ -16,9 +16,14 @@
 
 package com.stratio.qa.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Properties;
 
 public final class ThreadProperty {
+    private static final Logger logger = LoggerFactory.getLogger(ThreadProperty.class);
+
     private static final ThreadLocal<Properties> PROPS = new ThreadLocal<Properties>() {
         protected Properties initialValue() {
             return new Properties();
@@ -39,6 +44,7 @@ public final class ThreadProperty {
      */
     public static void set(String key, String value) {
         PROPS.get().setProperty(key, value);
+        logger.debug(String.format("Thread Property set: %s -> %s", key, value));
     }
 
     /**
