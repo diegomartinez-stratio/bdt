@@ -831,17 +831,24 @@ public class KubernetesClient {
             if (myPodExecListener.getStatus() != null && myPodExecListener.getStatus().getStatus() != null) {
                 Assertions.assertThat(myPodExecListener.getStatus().getReason()).isEqualTo(failureReason);
             } else {
+                logger.error("Exec Output: {} ", out);
+                logger.error("Exec Error Output: {} ", error);
                 throw new Exception("Expected failureReason is " + failureReason + " but status returned is null with code " + myPodExecListener.getCode());
             }
         } else if (myPodExecListener.getCode() != 0) {
             if (myPodExecListener.getStatus() != null && myPodExecListener.getStatus().getStatus() != null) {
+                logger.error("Exec Output: {} ", out);
+                logger.error("Exec Error Output: {} ", error);
                 throw new Exception("Command exit code is other than zero: " + myPodExecListener.getCode() + " - " + myPodExecListener.getStatus().getReason() + " - " + myPodExecListener.getStatus().getMessage());
             } else {
+                logger.error("Exec Output: {} ", out);
+                logger.error("Exec Error Output: {} ", error);
                 throw new Exception("Command exit code is other than zero: " + myPodExecListener.getCode());
             }
         }
         result.put("stdout", out.toString());
         result.put("stderr", error.toString());
+        result.put("timeout", String.valueOf(!latchTerminationStatus));
         return result;
     }
 

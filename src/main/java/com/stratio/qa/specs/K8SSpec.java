@@ -453,8 +453,13 @@ public class K8SSpec extends BaseGSpec {
         }
     }
 
-    @When("^I execute the command defined in datatable in pod with name '(.+?)' in namespace '(.+?)'( in container '(.*?)')?( with failure reason '(.*?)')?( and save it in environment variable '(.+?)')?( and save stderr in environment variable '(.+?)')?( and save it in file '(.*?)')?( and save stderr in file '(.*?)')?( and set timeout with '(\\d+)')?:$")
+    @Deprecated
     public void runCommandInPodDatatable(String name, String namespace, String container, String failureReason, String envVar, String errEnvVar, String fileName, String errFileName, Integer timeout, DataTable dataTable) throws Exception {
+        runCommandInPodDatatable(name, namespace, container, failureReason, envVar, errEnvVar, fileName, errFileName, timeout, null, dataTable);
+    }
+
+    @When("^I execute the command defined in datatable in pod with name '(.+?)' in namespace '(.+?)'( in container '(.*?)')?( with failure reason '(.*?)')?( and save it in environment variable '(.+?)')?( and save stderr in environment variable '(.+?)')?( and save it in file '(.*?)')?( and save stderr in file '(.*?)')?( and set timeout with '(\\d+)')?( and it doesn't return an exception if timeout is reached)?:$")
+    public void runCommandInPodDatatable(String name, String namespace, String container, String failureReason, String envVar, String errEnvVar, String fileName, String errFileName, Integer timeout, String avoidExceptionIfTimeout, DataTable dataTable) throws Exception {
         Map<String, String> result = commonspec.kubernetesClient.execCommand(name, namespace, container, timeout, dataTable.asList().toArray(new String[0]), failureReason);
         if (envVar != null) {
             ThreadProperty.set(envVar, result.get("stdout"));
@@ -467,6 +472,9 @@ public class K8SSpec extends BaseGSpec {
         }
         if (errFileName != null) {
             writeInFile(result.get("stderr"), errFileName);
+        }
+        if (Boolean.parseBoolean(result.get("timeout")) && avoidExceptionIfTimeout == null) {
+            fail("Latch could not terminate within specified time");
         }
     }
 

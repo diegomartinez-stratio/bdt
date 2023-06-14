@@ -2434,19 +2434,19 @@ public class GosecSpec extends BaseGSpec {
                 Arrays.asList("-c"),
                 Arrays.asList("shtpl < /tmp/ldapuser.template > /tmp/user.ldif")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, null, DataTable.create(command));
         command = Arrays.asList(
                 Arrays.asList("sh"),
                 Arrays.asList("-c"),
                 Arrays.asList("source /vault/secrets/idp-secrets ; cat /tmp/user.ldif | ldapadd -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, null, DataTable.create(command));
         command = Arrays.asList(
                 Arrays.asList("sh"),
                 Arrays.asList("-c"),
                 Arrays.asList("rm -f /tmp/*.template /tmp/*.ldif")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, null, DataTable.create(command));
         assertThat(ThreadProperty.get("output")).as("Log contains query cancelled").contains("adding new entry \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"");
         if (noSync == null) {
             Thread.sleep(5000);
@@ -2466,7 +2466,7 @@ public class GosecSpec extends BaseGSpec {
                 Arrays.asList("-c"),
                 Arrays.asList("source /vault/secrets/idp-secrets ; ldapdelete -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, null, DataTable.create(command));
         if (noSync == null) {
             Thread.sleep(5000);
             runLdapSynchronizerWithRetries("total", 5, 10);
@@ -2526,19 +2526,19 @@ public class GosecSpec extends BaseGSpec {
                 Arrays.asList("-c"),
                 Arrays.asList("shtpl < /tmp/ldapgroup.template > /tmp/group.ldif")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, null, DataTable.create(command));
         command = Arrays.asList(
                 Arrays.asList("sh"),
                 Arrays.asList("-c"),
                 Arrays.asList("source /vault/secrets/idp-secrets ; cat /tmp/group.ldif | ldapadd -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, null, DataTable.create(command));
         command = Arrays.asList(
                 Arrays.asList("sh"),
                 Arrays.asList("-c"),
                 Arrays.asList("rm -f /tmp/*.template /tmp/*.ldif")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, null, DataTable.create(command));
         assertThat(ThreadProperty.get("output")).as("Log contains query cancelled").contains("adding new entry \"cn=" + group + "," + ThreadProperty.get("groups_ou") + "\"");
         if (noSync == null) {
             Thread.sleep(5000);
@@ -2558,7 +2558,7 @@ public class GosecSpec extends BaseGSpec {
                 Arrays.asList("-c"),
                 Arrays.asList("source /vault/secrets/idp-secrets ; ldapdelete -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass \"cn=" + group + "," + ThreadProperty.get("groups_ou") + "\"")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, null, DataTable.create(command));
         if (noSync == null) {
             Thread.sleep(5000);
             runLdapSynchronizerWithRetries("total", 5, 10);

@@ -793,8 +793,8 @@ public class CCTSpec extends BaseGSpec {
         return numTasksRunning == numTasks;
     }
 
-    @Given("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, I check that the job with ID '(.+?)' in CCT is in '(created|started|stopped|failed|completed|completed_with_errors)' status")
-    public void checkJobStatus(Integer timeout, Integer wait, String jobId, String expectedStatus) throws Exception {
+    @Given("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, I check that the job with ID '(.+?)' in CCT is in '(created|started|stopped|failed|completed|completed_with_errors)' status( and fails if job is in '(created|started|stopped|failed|completed|completed_with_errors)' status)?")
+    public void checkJobStatus(Integer timeout, Integer wait, String jobId, String expectedStatus, String notExpectedStatusCauseFail) throws Exception {
         // Set REST connection
         commonspec.setCCTConnection(null, null);
         String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/jobs/" + jobId;
@@ -814,6 +814,9 @@ public class CCTSpec extends BaseGSpec {
                 commonspec.setCookies(new ArrayList<>()); // Set to empty list to force new cookies in next iteration
             }
             if (!statusService) {
+                if (notExpectedStatusCauseFail != null && ThreadProperty.get("jobStatus") != null && notExpectedStatusCauseFail.equalsIgnoreCase(ThreadProperty.get("jobStatus"))) {
+                    fail("CCT job has " + notExpectedStatusCauseFail + " status");
+                }
                 commonspec.getLogger().warn(expectedStatus + " status not found after " + i + " seconds. Current status: " + ThreadProperty.get("jobStatus"));
                 if (i < timeout) {
                     Thread.sleep(wait * 1000);
