@@ -117,8 +117,14 @@ public class KubernetesClient {
             ThreadProperty.set("CLUSTER_SSH_USER", System.getProperty("CLUSTER_SSH_USER") != null ? System.getProperty("CLUSTER_SSH_USER") : "NotSet");
             ThreadProperty.set("CLUSTER_SSH_PEM_PATH", System.getProperty("CLUSTER_SSH_PEM_PATH") != null ? System.getProperty("CLUSTER_SSH_PEM_PATH") : "NotSet");
             getInstance().connect(ThreadProperty.get("CLUSTER_KUBE_CONFIG_PATH"));
-            String podName = getPodsFilteredByLabel("app.kubernetes.io/instance=keos-operator,app.kubernetes.io/name=keos-operator", "keos-ops");
-            copyFileFromPod(podName, "keos-ops", "/workspace/keos.yaml", "target/test-classes/keos.yaml");
+            if (System.getProperty("CLUSTER_TYPE", "vmware").equals("eks")) {
+                commonspec.getLogger().info("There is no keos-operator in eks cluster");
+                ThreadProperty.set("CLUSTER_KEOS_YAML_PATH", System.getProperty("CLUSTER_KEOS_YAML_PATH") != null ? System.getProperty("CLUSTER_KEOS_YAML_PATH") : "/workspace/keos.yaml");
+                commonspec.runLocalCommand("cp " + ThreadProperty.get("CLUSTER_KEOS_YAML_PATH") + " target/test-classes/keos.yaml");
+            } else {
+                String podName = getPodsFilteredByLabel("app.kubernetes.io/instance=keos-operator,app.kubernetes.io/name=keos-operator", "keos-ops");
+                copyFileFromPod(podName, "keos-ops", "/workspace/keos.yaml", "target/test-classes/keos.yaml");
+            }
             FileSpec fileSpec = new FileSpec(commonspec);
             // Obtain and export values
             fileSpec.convertYamlToJson("keos.yaml", "keos.json");
@@ -169,8 +175,12 @@ public class KubernetesClient {
 
         // Save IP in /etc/hosts
         if (setKubernetesHost) {
-            commonspec.getETCHOSTSManagementUtils().addK8sHost(ThreadProperty.get("KEOS_OAUTH2_PROXY_HOST_IP"), ThreadProperty.get("KEOS_OAUTH2_PROXY_HOST"));
-            commonspec.getETCHOSTSManagementUtils().addK8sHost(ThreadProperty.get("KEOS_SIS_HOST_IP"), ThreadProperty.get("KEOS_SIS_HOST"));
+            if (System.getProperty("CLUSTER_TYPE", "vmware").equals("eks")) {
+                commonspec.getLogger().info("Skipping /etc/hosts modification for eks cluster");
+            } else {
+                commonspec.getETCHOSTSManagementUtils().addK8sHost(ThreadProperty.get("KEOS_OAUTH2_PROXY_HOST_IP"), ThreadProperty.get("KEOS_OAUTH2_PROXY_HOST"));
+                commonspec.getETCHOSTSManagementUtils().addK8sHost(ThreadProperty.get("KEOS_SIS_HOST_IP"), ThreadProperty.get("KEOS_SIS_HOST"));
+            }
         }
 
         // Set variables from command-center-config configmap
@@ -210,7 +220,12 @@ public class KubernetesClient {
 
     private boolean loadVariablesFromKeosYaml(CommonG commonspec, String keosJson) throws Exception {
         boolean setKubernetesHost = false;
-        ThreadProperty.set("CLUSTER_SSH_USER", commonspec.getJSONPathString(keosJson, "$.infra.ssh_user", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+
+        if (System.getProperty("CLUSTER_TYPE", "vmware").equals("eks")) {
+            commonspec.getLogger().info("CLUSTER_SSH_USER variable cannot be set because there is no infra section in keos.yaml in eks cluster");
+        } else {
+            ThreadProperty.set("CLUSTER_SSH_USER", commonspec.getJSONPathString(keosJson, "$.infra.ssh_user", null).replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\"", ""));
+        }
 
         if (System.getProperty("KEOS_VERSION") == null) {
             throw new Exception("cluster_versions.yaml or cluster.yaml not found, so KEOS_VERSION must be defined");
@@ -343,7 +358,12 @@ public class KubernetesClient {
             }
             if (varName != null) {
                 ThreadProperty.set(varName, ingress.getSpec().getRules().get(0).getHost());
-                ThreadProperty.set(varName + "_IP", ingress.getStatus().getLoadBalancer().getIngress().get(0).getIp());
+
+                if (System.getProperty("CLUSTER_TYPE", "vmware").equals("eks")) {
+                    ThreadProperty.set(varName + "_HOSTNAME", ingress.getStatus().getLoadBalancer().getIngress().get(0).getHostname());
+                } else {
+                    ThreadProperty.set(varName + "_IP", ingress.getStatus().getLoadBalancer().getIngress().get(0).getIp());
+                }
             }
         }
     }
