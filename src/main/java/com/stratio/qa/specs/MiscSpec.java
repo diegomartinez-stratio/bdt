@@ -133,6 +133,22 @@ public class MiscSpec extends BaseGSpec {
     }
 
     /**
+     * Sets multiple ThreadProperty variables using a data table
+     * Given I save the following variables:
+     *      | NEW_VAR | NEW_VALUE |
+     *      | OLD_VAR | NEW_VALUE |
+     */
+    @Given("^I save the following variables:$")
+    public void saveMultipleVariables(DataTable dataTable) {
+        for (List<String> row : dataTable.cells()) {
+            String key = row.get(0);
+            String value = row.get(1);
+
+            ThreadProperty.set(key, value);
+        }
+    }
+
+    /**
      * Wait seconds.
      *
      * @param seconds
