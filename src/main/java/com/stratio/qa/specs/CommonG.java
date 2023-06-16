@@ -2164,6 +2164,9 @@ public class CommonG {
                         Assertions.fail("Expected array for size operation check");
                     }
                     break;
+                case "not empty":
+                    assertThat(value).as("Evaluate JSONPath is not empty").isNotEmpty();
+                    break;
                 default:
                     Assertions.fail("Not implemented condition (" + condition + ")");
                     break;
