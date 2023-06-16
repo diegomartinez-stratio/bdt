@@ -360,6 +360,92 @@ public class RestSpec extends BaseGSpec {
         }
     }
 
+    @When("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, I send a '(.+?)' request to '(.+?)'( as '(json|string|gov|scim|servicegov)')? so that the field '(.+?)' is( not)? equals to( this regex)? '(.+?)'$")
+    public void sendRequestTimeoutExactValue(Integer timeout, Integer wait, String requestType, String endPoint, String type, String expression, String contains, String regex, String result) throws Exception {
+        AssertionError ex = null;
+        Future<Response> response;
+
+        if (result != null) {
+            Boolean searchUntilContains;
+            if (contains == null || contains.isEmpty()) {
+                searchUntilContains = Boolean.TRUE;
+            } else {
+                searchUntilContains = Boolean.FALSE;
+            }
+            Boolean found = !searchUntilContains;
+
+            for (int i = 0; (i <= timeout); i += wait) {
+                if (found && searchUntilContains) {
+                    break;
+                }
+                try {
+                    response = commonspec.generateRequest(requestType, false, null, null, endPoint, "", type, "");
+                    commonspec.setResponse(requestType, response.get());
+                    commonspec.getLogger().debug("Checking response value");
+                    commonspec.getLogger().debug("Response body: \n" + commonspec.getResponse().getResponse());
+                    String value = commonspec.getJSONPathString(commonspec.getResponse().getResponse(), expression, null);
+
+                    if (searchUntilContains) {
+                        if (regex == null || regex.isEmpty()) {
+                            assertThat(value).as("Evaluate JSONPath does not match with proposed value").isEqualTo(result);
+                        } else {
+                            assertThat(value).containsPattern(result);
+                        }
+                        found = true;
+                        timeout = i;
+                    } else {
+                        if (regex == null || regex.isEmpty()) {
+                            assertThat(value).as("Evaluate JSONPath match with proposed value").isNotEqualTo(result);
+                        } else {
+                            assertThat(value).doesNotContainPattern(result);
+                        }
+                        found = false;
+                        timeout = i;
+                    }
+                } catch (AssertionError | Exception e) {
+                    if (!found) {
+                        commonspec.getLogger().info("Response value not found after " + i + " seconds");
+                    } else {
+                        commonspec.getLogger().info("Response value found after " + i + " seconds");
+                    }
+                    Thread.sleep(wait * 1000);
+                    if (e instanceof AssertionError) {
+                        ex = (AssertionError) e;
+                    }
+                }
+                if (!found && !searchUntilContains) {
+                    break;
+                }
+            }
+            if ((!found && searchUntilContains) || (found && !searchUntilContains)) {
+                throw (ex);
+            }
+            if (searchUntilContains) {
+                commonspec.getLogger().info("Success! Response value found after " + timeout + " seconds");
+            } else {
+                commonspec.getLogger().info("Success! Response value not found after " + timeout + " seconds");
+            }
+        } else {
+
+            for (int i = 0; (i <= timeout); i += wait) {
+                try {
+                    response = commonspec.generateRequest(requestType, false, null, null, endPoint, "", type, "");
+                    commonspec.setResponse(requestType, response.get());
+                    commonspec.getLogger().debug("Checking response value");
+                    commonspec.getLogger().debug("Response body: \n" + commonspec.getResponse().getResponse());
+
+                    assertThat(commonspec.getResponse().getResponse());
+                    timeout = i;
+                } catch (AssertionError | Exception e) {
+                    Thread.sleep(wait * 1000);
+                    if (e instanceof AssertionError) {
+                        ex = (AssertionError) e;
+                    }
+                }
+            }
+        }
+    }
+
     @Then("^the service response must contain the text '(.*?)'$")
     public void assertResponseMessage(String expectedText) throws SecurityException, IllegalArgumentException {
         Pattern pattern = CommonG.matchesOrContains(expectedText);
