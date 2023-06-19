@@ -18,6 +18,7 @@ package com.stratio.qa.specs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.stratio.qa.aspects.RunOnTagAspect;
 import org.asynchttpclient.Response;
 import com.stratio.qa.assertions.Assertions;
 import com.stratio.qa.models.cct.deployApi.DeployedApp;
@@ -1374,8 +1375,14 @@ public class CCTSpec extends BaseGSpec {
     private void installServiceFromCCTKeos(String jsonFile, String tenant, String namespace) throws Exception {
         // Set REST connection
         commonspec.setCCTConnection(null, null);
-
-        String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/install";
+        getCCTOrchestratorVersion();
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v2/install";
+        int expectedCodeResponse = 202;
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(cct-orchestrator_version<3.0.0)"))) {
+            endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/install";
+            expectedCodeResponse = 200;
+        }
         if (tenant != null) {
             endPoint += "?tenant=" + tenant;
         }
@@ -1389,11 +1396,11 @@ public class CCTSpec extends BaseGSpec {
             DataTable modifications = DataTable.create(rawData);
             data = this.commonspec.modifyData(data, "json", modifications);
         }
-
+        commonspec.getLogger().info("Endpoint to install service: {}", endPoint);
         Future<Response> response = commonspec.generateRequest("POST", true, null, null, endPoint, data, "json");
         commonspec.setResponse("POST", response.get());
 
-        if (commonspec.getResponse().getStatusCode() != 200) {
+        if (commonspec.getResponse().getStatusCode() != expectedCodeResponse) {
             logger.error("Request to endpoint: " + endPoint + " failed with status code: " + commonspec.getResponse().getStatusCode() + " and response: " + commonspec.getResponse().getResponse());
             throw new Exception("Request to endpoint: " + endPoint + " failed with status code: " + commonspec.getResponse().getStatusCode() + " and response: " + commonspec.getResponse().getResponse());
         }
@@ -1477,14 +1484,20 @@ public class CCTSpec extends BaseGSpec {
         }
         // Set REST connection
         commonspec.setCCTConnection(null, null);
-
-        String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/uninstall";
+        getCCTOrchestratorVersion();
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v2/uninstall/" + service + "." + namespace;
+        String requestType = "PUT";
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(cct-orchestrator_version<3.0.0)"))) {
+            endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/uninstall";
+            requestType = "POST";
+        }
         if (tenant != null) {
             endPoint += "?tenant=" + tenant;
         }
-        Future<Response> response = commonspec.generateRequest("POST", true, null, null, endPoint, schemaJson.toString(), "json");
-
-        commonspec.setResponse("POST", response.get());
+        commonspec.getLogger().info("Endpoint to uninstall service: {} - {}", requestType, endPoint);
+        Future<Response> response = commonspec.generateRequest(requestType, true, null, null, endPoint, schemaJson.toString(), "json");
+        commonspec.setResponse(requestType, response.get());
 
         if (commonspec.getResponse().getStatusCode() != 202 && commonspec.getResponse().getStatusCode() != 200) {
             logger.error("Request to endpoint: " + endPoint + " failed with status code: " + commonspec.getResponse().getStatusCode() + " and response: " + commonspec.getResponse().getResponse());
@@ -1650,10 +1663,19 @@ public class CCTSpec extends BaseGSpec {
     private void updateCCTServiceKeos(String serviceName, String jsonFile, String schema, String tenant, String namespace, DataTable modifications) throws Exception {
         // Set REST connection
         commonspec.setCCTConnection(null, null);
+        getCCTOrchestratorVersion();
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v2/update/" + serviceName + "." + namespace;
+        String requestType = "PUT";
+        int expectedCodeResponse = 202;
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(cct-orchestrator_version<3.0.0)"))) {
+            endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/update";
+            requestType = "POST";
+            expectedCodeResponse = 200;
+        }
 
-        String endPointUpdate = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/update";
         if (tenant != null) {
-            endPointUpdate += "?tenant=" + tenant;
+            endPoint += "?tenant=" + tenant;
         }
 
         // Update based on json file
@@ -1668,7 +1690,7 @@ public class CCTSpec extends BaseGSpec {
             data = this.commonspec.retrieveData(schema, "json");
 
             // Obtain info for service current deployment
-            String endPointDeployment = ThreadProperty.get("KEOS_CCT_APPLICATIONS_QUERY_SERVICE_INGRESS_PATH") + "/v1/applications/" + service + "/deployment";
+            String endPointDeployment = ThreadProperty.get("KEOS_CCT_APPLICATIONS_QUERY_SERVICE_INGRESS_PATH") + "/v1/applications/" + service + "/deployment?interpolate=true";
 
             Future<Response> responseDeployment = commonspec.generateRequest("GET", true, null, null, endPointDeployment, null, "json");
             commonspec.setResponse("GET", responseDeployment.get());
@@ -1711,12 +1733,13 @@ public class CCTSpec extends BaseGSpec {
             modifiedData = data;
         }
 
-        Future<Response> response = commonspec.generateRequest("POST", true, null, null, endPointUpdate, modifiedData, "json");
-        commonspec.setResponse("POST", response.get());
+        commonspec.getLogger().info("Endpoint to update service: {} - {}", requestType, endPoint);
+        Future<Response> response = commonspec.generateRequest(requestType, true, null, null, endPoint, modifiedData, "json");
+        commonspec.setResponse(requestType, response.get());
 
-        if (commonspec.getResponse().getStatusCode() != 200) {
-            logger.error("Request to endpoint: " + endPointUpdate + " failed with status code: " + commonspec.getResponse().getStatusCode() + " and response: " + commonspec.getResponse().getResponse());
-            throw new Exception("Request to endpoint: " + endPointUpdate + " failed with status code: " + commonspec.getResponse().getStatusCode() + " and response: " + commonspec.getResponse().getResponse());
+        if (commonspec.getResponse().getStatusCode() != expectedCodeResponse) {
+            logger.error("Request to endpoint: " + endPoint + " failed with status code: " + commonspec.getResponse().getStatusCode() + " and response: " + commonspec.getResponse().getResponse());
+            throw new Exception("Request to endpoint: " + endPoint + " failed with status code: " + commonspec.getResponse().getStatusCode() + " and response: " + commonspec.getResponse().getResponse());
         }
         miscSpec.saveElementEnvironment(null, "$.id", "jobId");
     }
@@ -2762,6 +2785,16 @@ public class CCTSpec extends BaseGSpec {
     @Given("^I create tenant '(.+?)' through CCT( with users: '(.+?)')?( with groups: '(.+?)')?( without identities)?$")
     public void createTenant(String tenantName, String tenantUsers, String tenantGroups, String withoutIdentities) throws Exception {
         commonspec.setCCTConnection(null, null);
+        getCCTOrchestratorVersion();
+        RunOnTagAspect runOnTagAspect = new RunOnTagAspect();
+        if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@runOnEnv(cct-orchestrator_version<3.0.0)"))) {
+            createTenantOrchestratorV1(tenantName, tenantUsers, tenantGroups, withoutIdentities);
+        } else {
+            createTenantOrchestratorV2(tenantName, tenantUsers, tenantGroups, withoutIdentities);
+        }
+    }
+
+    private void createTenantOrchestratorV1(String tenantName, String tenantUsers, String tenantGroups, String withoutIdentities) throws Exception {
         String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v1/tenant";
         JSONObject jsonTenant = new JSONObject();
         jsonTenant.put("kind", "Tenant");
@@ -2784,6 +2817,49 @@ public class CCTSpec extends BaseGSpec {
         metadata.put("name", tenantName);
         metadata.put("uid", (Object) null);
         jsonTenant.put("metadata", metadata);
+        commonspec.getLogger().info("Endpoint to create tenant: {}", endPoint);
+        Future<Response> response = commonspec.generateRequest("POST", true, null, null, endPoint, jsonTenant.toString(), "json");
+        commonspec.setResponse("POST", response.get());
+        Assertions.assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(200);
+    }
+
+    private void createTenantOrchestratorV2(String tenantName, String tenantUsers, String tenantGroups, String withoutIdentities) throws Exception {
+        String endPoint = ThreadProperty.get("KEOS_CCT_ORCHESTRATOR_INGRESS_PATH") + "/v2/tenant/" + tenantName;
+        JSONObject jsonTenant = new JSONObject();
+        // Name
+        jsonTenant.put("name", tenantName);
+        // Owners
+        JSONArray ownerArray = new JSONArray();
+        JSONObject owner = new JSONObject();
+        owner.put("name", tenantName);
+        owner.put("kind", "Group");
+        ownerArray.put(owner);
+        jsonTenant.put("owners", ownerArray);
+        // Namespace options
+        JSONObject namespaceOptions = new JSONObject();
+        namespaceOptions.put("quota", (Object) null);
+        jsonTenant.put("namespaceOptions", namespaceOptions);
+        // Resource quotas
+        JSONObject resourceQuotas = new JSONObject();
+        resourceQuotas.put("pods", (Object) null);
+        resourceQuotas.put("limitsCpu", (Object) null);
+        resourceQuotas.put("limitsMemory", (Object) null);
+        resourceQuotas.put("requestsCpu", (Object) null);
+        resourceQuotas.put("requestsMemory", (Object) null);
+        jsonTenant.put("resourceQuotas", resourceQuotas);
+        // Annotations
+        JSONObject annotations = new JSONObject();
+        annotations.put("stratio.tenant.kubernetes.io/disable-net-policies", false);
+        annotations.put("stratio.tenant.kubernetes.io/disable-sec-policies", false);
+        annotations.put("stratio.tenant.kubernetes.io/disable-own-pki", false);
+        annotations.put("stratio.tenant.kubernetes.io/disable-gosec-tenancy", false);
+        annotations.put("stratio.tenant.kubernetes.io/tenant-description", tenantName);
+        if (withoutIdentities == null) {
+            annotations.put("stratio.tenant.kubernetes.io/gosec-tenant-initial-uids", tenantUsers != null ? tenantUsers : tenantName + "-user");
+            annotations.put("stratio.tenant.kubernetes.io/gosec-tenant-initial-gids", tenantGroups != null ? tenantGroups : tenantName + "-group");
+        }
+        jsonTenant.put("annotations", annotations);
+        commonspec.getLogger().info("Endpoint to create tenant: {}", endPoint);
         Future<Response> response = commonspec.generateRequest("POST", true, null, null, endPoint, jsonTenant.toString(), "json");
         commonspec.setResponse("POST", response.get());
         Assertions.assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(200);
@@ -2796,5 +2872,15 @@ public class CCTSpec extends BaseGSpec {
         Future<Response> response = commonspec.generateRequest("POST", true, null, null, endPoint, "name=" + namespace.replaceAll(tenantName + "-", "") + "&tenant=" + tenantName, "string");
         commonspec.setResponse("POST", response.get());
         Assertions.assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(200);
+    }
+
+    private void getCCTOrchestratorVersion() {
+        // Get CCT Orchestrator version
+        String cctOrchestratorVersion = commonspec.kubernetesClient.getDeploymentVersion(ThreadProperty.get("cct-orchestrator_id"), "keos-cct");
+        if (cctOrchestratorVersion.contains("-")) {
+            cctOrchestratorVersion = cctOrchestratorVersion.split("-")[0];
+        }
+        ThreadProperty.set("cct-orchestrator_version", cctOrchestratorVersion);
+        commonspec.getLogger().debug("CCT Orchestrator Version = {}", cctOrchestratorVersion);
     }
 }
