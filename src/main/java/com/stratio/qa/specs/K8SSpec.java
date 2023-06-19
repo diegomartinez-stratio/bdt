@@ -811,15 +811,14 @@ public class K8SSpec extends BaseGSpec {
         }
     }
 
-    @When("I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)' with path '(.+?)' and value '(.+?)' as '(.+?)'( with exit status '(\\d+)')?")
-    public void executePatch(String deploymentName, String crdName, String namespace, String path, String value, String type, String sExitStatus) {
+    @When("I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)' with path '(.+?)' and value '(.+?)'( as '(.+?)')?( with exit status '(\\d+)')?")
+    public void executePatch(String crd, String crdName, String namespace, String path, String value, String type, String sExitStatus) throws Exception {
         Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         if (exitStatus == null) {
             exitStatus = 0;
         }
-        int response = this.commonspec.kubernetesClient.patch(deploymentName, crdName, namespace, path, value, type);
+        int response = this.commonspec.kubernetesClient.patch(crd, crdName, namespace, path, value, type);
         Assertions.assertThat(response).isEqualTo(exitStatus);
-
     }
 
     @When("I create secret using keos-operator in path '(.+?)' with params:")

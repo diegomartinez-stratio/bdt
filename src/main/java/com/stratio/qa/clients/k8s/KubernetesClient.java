@@ -2037,43 +2037,55 @@ public class KubernetesClient {
     /**
      * Executes the patch in custom resource and returns 0 if success and 1 if not
      *
-     * @param deploymentName
+     * @param crdType
      * @param crdName
      * @param namespace
      * @param path
      * @param value
-     * @param type           Integer or String
+     * @param type      Integer or String
      * @return 0 if success and 1 if fails
      **/
-    public int patch(String deploymentName, String crdName, String namespace, String path, String value, String type) {
+    public int patch(String crdType, String crdName, String namespace, String path, String value, String type) throws Exception {
         int response = 1;
-        if ("String".equals(type) || "Integer".equals(type)) {
-            boolean string = false;
-            boolean integer = false;
 
-            String[] pathSplitted = path.split("/");
-            List<String> pathDescompuesto = new ArrayList<>(Arrays.asList(pathSplitted));
-            pathDescompuesto.remove(0);
-            if ("String".equals(type)) {
-                string = true;
-            } else {
-                integer = true;
-            }
+        String[] pathSplitted = path.split("/");
+        List<String> pathList = new ArrayList<>(Arrays.asList(pathSplitted));
+        pathList.remove(0);
 
-            CustomResourceDefinition crd = k8sClient.apiextensions().v1().customResourceDefinitions().withName(deploymentName).get();
-            CustomResourceDefinitionContext crdContext = CustomResourceDefinitionContext.fromCrd(crd);
-            List<GenericKubernetesResource> kubernetesResourceList = k8sClient.genericKubernetesResources(crdContext).inNamespace(namespace).list().getItems();
+        CustomResourceDefinition crd = k8sClient.apiextensions().v1().customResourceDefinitions().withName(crdType).get();
+        if (crd == null) {
+            throw new Exception("CRD definition " + crdType + " not found. Check with kubectl get crd if it exists");
+        }
+        CustomResourceDefinitionContext crdContext = CustomResourceDefinitionContext.fromCrd(crd);
+        List<GenericKubernetesResource> kubernetesResourceList = k8sClient.genericKubernetesResources(crdContext).inNamespace(namespace).list().getItems();
 
-            for (GenericKubernetesResource genericKubernetesResource : kubernetesResourceList) {
-                if (genericKubernetesResource.getMetadata().getName().equals(crdName)) {
-                    Map<String, Object> map = (Map<String, Object>) genericKubernetesResource.getAdditionalProperties().get(pathDescompuesto.get(0));
-                    for (int j = 1; j < pathDescompuesto.size() - 1; j++) {
-                        map = (Map<String, Object>) map.get(pathDescompuesto.get(j));
+        for (GenericKubernetesResource genericKubernetesResource : kubernetesResourceList) {
+            if (genericKubernetesResource.getMetadata().getName().equals(crdName)) {
+                Object oMap = genericKubernetesResource.getAdditionalProperties().get(pathList.get(0));
+                for (int j = 1; j < pathList.size() - 1; j++) {
+                    if (oMap instanceof Map) {
+                        oMap = ((Map<String, Object>) oMap).get(pathList.get(j));
+                    } else if (oMap instanceof List) {
+                        try {
+                            oMap = ((List) oMap).get(Integer.parseInt(pathList.get(j)));
+                        } catch (NumberFormatException nfe) {
+                            getLogger().error("Element is array, {} must be a number", pathList.get(j));
+                            throw nfe;
+                        }
                     }
-                    if (string) {
-                        map.put(pathDescompuesto.get(pathDescompuesto.size() - 1), value);
-                    } else if (integer) {
-                        map.put(pathDescompuesto.get(pathDescompuesto.size() - 1), Integer.parseInt(value));
+                }
+                if (oMap instanceof Map) {
+                    Map<String, Object> map = (Map<String, Object>) oMap;
+                    if (type != null) {
+                        if (type.equalsIgnoreCase("integer")) {
+                            map.put(pathList.get(pathList.size() - 1), Integer.parseInt(value));
+                        } else if (type.equalsIgnoreCase("string")) {
+                            map.put(pathList.get(pathList.size() - 1), value);
+                        } else if (type.equalsIgnoreCase("boolean")) {
+                            map.put(pathList.get(pathList.size() - 1), Boolean.parseBoolean(value));
+                        }
+                    } else {
+                        map.put(pathList.get(pathList.size() - 1), value);
                     }
                     try {
                         k8sClient.genericKubernetesResources(crdContext).inNamespace(namespace).resource(genericKubernetesResource).replace();
@@ -2082,9 +2094,12 @@ public class KubernetesClient {
                     } catch (KubernetesClientException e) {
                         response = 1;
                     }
+                } else {
+                    throw new Exception("Final element is not a map, so we can't patch this value");
                 }
             }
         }
+
         return response;
     }
 
@@ -2125,11 +2140,12 @@ public class KubernetesClient {
 
     /**
      * Create resourceQuota k8s object
-     * @param rqName Name
-     * @param namespace Namespace
-     * @param cpuQuantity CPU
+     *
+     * @param rqName         Name
+     * @param namespace      Namespace
+     * @param cpuQuantity    CPU
      * @param memoryQuantity Memory
-     * @param podsQuantity Pods
+     * @param podsQuantity   Pods
      */
     public void createResourceQuota(String rqName, String namespace, String cpuQuantity, String memoryQuantity, String podsQuantity) {
         Map<String, Quantity> rqMap = new HashMap<>();
@@ -2152,7 +2168,7 @@ public class KubernetesClient {
     /**
      * Get ResourceQuota
      *
-     * @param rqName ResourceQuota name
+     * @param rqName    ResourceQuota name
      * @param namespace Namespace
      * @return ResourceQuota
      */
@@ -2163,7 +2179,7 @@ public class KubernetesClient {
     /**
      * Describe ResourceQuota in yaml format
      *
-     * @param rqName   ResourceQuota name
+     * @param rqName    ResourceQuota name
      * @param namespace Namespace
      * @return String with ResourceQuota in yaml format
      */
@@ -2174,7 +2190,7 @@ public class KubernetesClient {
     /**
      * Remove ResourceQuota object
      *
-     * @param rqName ResourceQuota name
+     * @param rqName    ResourceQuota name
      * @param namespace Namespace
      */
     public void deleteResourceQuota(String rqName, String namespace) {
@@ -2185,7 +2201,7 @@ public class KubernetesClient {
      * Remove ServiceAccount object
      *
      * @param serviceAccountName ServiceAccount name
-     * @param namespace Namespace
+     * @param namespace          Namespace
      */
     public void deleteServiceAccount(String serviceAccountName, String namespace) {
         k8sClient.serviceAccounts().inNamespace(namespace).withName(serviceAccountName).delete();
@@ -2194,7 +2210,7 @@ public class KubernetesClient {
     /**
      * Remove Role object
      *
-     * @param role Role name
+     * @param role      Role name
      * @param namespace Namespace
      */
     public void deleteRole(String role, String namespace) {
@@ -2205,7 +2221,7 @@ public class KubernetesClient {
      * Remove RoleBinding object
      *
      * @param roleBinding RoleBinding name
-     * @param namespace Namespace
+     * @param namespace   Namespace
      */
     public void deleteRoleBinding(String roleBinding, String namespace) {
         k8sClient.rbac().roleBindings().inNamespace(namespace).withName(roleBinding).delete();
