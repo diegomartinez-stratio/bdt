@@ -811,13 +811,33 @@ public class K8SSpec extends BaseGSpec {
         }
     }
 
-    @When("I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)' with path '(.+?)' and value '(.+?)'( as '(.+?)')?( with exit status '(\\d+)')?")
-    public void executePatch(String crd, String crdName, String namespace, String path, String value, String type, String sExitStatus) throws Exception {
+    @When("^I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)' with path '(.+?)' and value '(.+?)'( as '(.+?)')?( with exit status '(\\d+)')?$")
+    public void executeCRDPatch(String crd, String crdName, String namespace, String path, String value, String type, String sExitStatus) throws Exception {
         Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         if (exitStatus == null) {
             exitStatus = 0;
         }
-        int response = this.commonspec.kubernetesClient.patch(crd, crdName, namespace, path, value, type);
+        int response = this.commonspec.kubernetesClient.patchCRD(crd, crdName, namespace, path, value, type);
+        Assertions.assertThat(response).isEqualTo(exitStatus);
+    }
+
+    @When("^I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)'( with exit status '(\\d+)')? with:$")
+    public void executeCRDPatch(String crd, String crdName, String namespace, String sExitStatus, DataTable modifications) throws Exception {
+        Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
+        if (exitStatus == null) {
+            exitStatus = 0;
+        }
+        int response = this.commonspec.kubernetesClient.patchCRDMultipleFields(crd, crdName, namespace, modifications);
+        Assertions.assertThat(response).isEqualTo(exitStatus);
+    }
+
+    @When("^I patch persistentVolumeClaims with name '(.+?)' in namespace '(.+?)' with path '(.+?)' and value '(.+?)'( with exit status '(\\d+)')?$")
+    public void executePatch(String name, String namespace, String path, String value, String sExitStatus) throws Exception {
+        Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
+        if (exitStatus == null) {
+            exitStatus = 0;
+        }
+        int response = this.commonspec.kubernetesClient.patchPersistVolumeClaim(name, namespace, path, value);
         Assertions.assertThat(response).isEqualTo(exitStatus);
     }
 

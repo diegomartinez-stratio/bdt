@@ -2042,10 +2042,10 @@ public class KubernetesClient {
      * @param namespace
      * @param path
      * @param value
-     * @param type      Integer or String
+     * @param type      Integer/String/Boolean
      * @return 0 if success and 1 if fails
      **/
-    public int patch(String crdType, String crdName, String namespace, String path, String value, String type) throws Exception {
+    public int patchCRD(String crdType, String crdName, String namespace, String path, String value, String type) throws Exception {
         int response = 1;
 
         String[] pathSplitted = path.split("/");
@@ -2062,36 +2062,16 @@ public class KubernetesClient {
         for (GenericKubernetesResource genericKubernetesResource : kubernetesResourceList) {
             if (genericKubernetesResource.getMetadata().getName().equals(crdName)) {
                 Object oMap = genericKubernetesResource.getAdditionalProperties().get(pathList.get(0));
-                for (int j = 1; j < pathList.size() - 1; j++) {
-                    if (oMap instanceof Map) {
-                        oMap = ((Map<String, Object>) oMap).get(pathList.get(j));
-                    } else if (oMap instanceof List) {
-                        try {
-                            oMap = ((List) oMap).get(Integer.parseInt(pathList.get(j)));
-                        } catch (NumberFormatException nfe) {
-                            getLogger().error("Element is array, {} must be a number", pathList.get(j));
-                            throw nfe;
-                        }
-                    }
-                }
+                oMap = iterateMap(oMap, pathList);
                 if (oMap instanceof Map) {
                     Map<String, Object> map = (Map<String, Object>) oMap;
-                    if (type != null) {
-                        if (type.equalsIgnoreCase("integer")) {
-                            map.put(pathList.get(pathList.size() - 1), Integer.parseInt(value));
-                        } else if (type.equalsIgnoreCase("string")) {
-                            map.put(pathList.get(pathList.size() - 1), value);
-                        } else if (type.equalsIgnoreCase("boolean")) {
-                            map.put(pathList.get(pathList.size() - 1), Boolean.parseBoolean(value));
-                        }
-                    } else {
-                        map.put(pathList.get(pathList.size() - 1), value);
-                    }
+                    patchMap(map, pathList.get(pathList.size() - 1), value, type, true);
                     try {
                         k8sClient.genericKubernetesResources(crdContext).inNamespace(namespace).resource(genericKubernetesResource).replace();
                         response = 0;
                         getLogger().debug("Patched");
                     } catch (KubernetesClientException e) {
+                        logger.warn("Error in CRD patch", e);
                         response = 1;
                     }
                 } else {
@@ -2099,7 +2079,128 @@ public class KubernetesClient {
                 }
             }
         }
+        return response;
+    }
 
+    private Object iterateMap(Object objMap, List<String> pathList) {
+        Object oMap = objMap;
+        for (int j = 1; j < pathList.size() - 1; j++) {
+            if (oMap instanceof Map) {
+                oMap = ((Map<String, Object>) oMap).get(pathList.get(j));
+            } else if (oMap instanceof List) {
+                try {
+                    oMap = ((List) oMap).get(Integer.parseInt(pathList.get(j)));
+                } catch (NumberFormatException nfe) {
+                    getLogger().error("Element is array, {} must be a number", pathList.get(j));
+                    throw nfe;
+                }
+            }
+        }
+        return oMap;
+    }
+
+    private void patchMap(Map<String, Object> map, String field, String value, String type, boolean addOrUpdate) {
+        if (addOrUpdate) {
+            if (type != null) {
+                if (type.equalsIgnoreCase("integer")) {
+                    map.put(field, Integer.parseInt(value));
+                } else if (type.equalsIgnoreCase("string")) {
+                    map.put(field, value);
+                } else if (type.equalsIgnoreCase("boolean")) {
+                    map.put(field, Boolean.parseBoolean(value));
+                }
+            } else {
+                map.put(field, value);
+            }
+        } else {
+            map.remove(field);
+        }
+    }
+
+    /**
+     * Executes the patch in custom resource and returns 0 if success and 1 if not
+     *
+     * @param crdType
+     * @param crdName
+     * @param namespace
+     * @param modifications Datatable with 3 columns: Path | Value | Type
+     * @return 0 if success and 1 if fails
+     **/
+    public int patchCRDMultipleFields(String crdType, String crdName, String namespace, DataTable modifications) throws Exception {
+        int response = 1;
+        CustomResourceDefinition crd = k8sClient.apiextensions().v1().customResourceDefinitions().withName(crdType).get();
+        if (crd == null) {
+            throw new Exception("CRD definition " + crdType + " not found. Check with kubectl get crd if it exists");
+        }
+        CustomResourceDefinitionContext crdContext = CustomResourceDefinitionContext.fromCrd(crd);
+        List<GenericKubernetesResource> kubernetesResourceList = k8sClient.genericKubernetesResources(crdContext).inNamespace(namespace).list().getItems();
+
+        for (GenericKubernetesResource genericKubernetesResource : kubernetesResourceList) {
+            if (genericKubernetesResource.getMetadata().getName().equals(crdName)) {
+                for (int i = 0; i < modifications.cells().size(); i++) {
+                    String path = modifications.cells().get(i).get(0);
+                    String operation = modifications.cells().get(i).get(1);
+                    boolean op;
+                    if (operation.equals("ADD") || operation.equals("UPDATE")) {
+                        op = true;
+                    } else if (operation.equals("DELETE")) {
+                        op = false;
+                    } else {
+                        throw new Exception("Operation " + operation + " not supported");
+                    }
+                    String value = modifications.cells().get(i).get(2);
+                    String type = modifications.cells().get(i).get(3);
+                    String[] pathSplitted = path.split("/");
+                    List<String> pathList = new ArrayList<>(Arrays.asList(pathSplitted));
+                    pathList.remove(0);
+                    Object oMap = genericKubernetesResource.getAdditionalProperties().get(pathList.get(0));
+                    oMap = iterateMap(oMap, pathList);
+                    if (oMap instanceof Map) {
+                        Map<String, Object> map = (Map<String, Object>) oMap;
+                        patchMap(map, pathList.get(pathList.size() - 1), value, type, op);
+                    } else {
+                        throw new Exception("Final element is not a map, so we can't patch this value");
+                    }
+                }
+                try {
+                    k8sClient.genericKubernetesResources(crdContext).inNamespace(namespace).resource(genericKubernetesResource).replace();
+                    response = 0;
+                    getLogger().debug("Patched");
+                } catch (KubernetesClientException e) {
+                    logger.warn("Error in CRD patch", e);
+                    response = 1;
+                }
+            }
+        }
+        return response;
+    }
+
+    /**
+     * Executes the patch in PVC and returns 0 if success and 1 if not
+     *
+     * @param name
+     * @param namespace
+     * @param path
+     * @param value
+     * @return 0 if success and 1 if fails
+     **/
+    public int patchPersistVolumeClaim(String name, String namespace, String path, String value) throws Exception {
+        int response = 1;
+        List<String> supportedPaths = new ArrayList<>(List.of("/spec/resources/requests/storage"));
+        if (supportedPaths.contains(path)) {
+            PersistentVolumeClaim pvc = getPersistentVolumeClaims(name, namespace);
+            switch (path) {
+                case "/spec/resources/requests/storage":
+                    pvc.getSpec().getResources().getRequests().put("storage", new Quantity(value));
+                    k8sClient.persistentVolumeClaims().inNamespace(namespace).resource(pvc).replace();
+                    response = 0;
+                    break;
+                default:
+            }
+
+        } else {
+            throw new Exception("Patch not supported in path " + path + " for PVC");
+        }
         return response;
     }
 
