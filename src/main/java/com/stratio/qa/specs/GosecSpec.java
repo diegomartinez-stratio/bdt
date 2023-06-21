@@ -30,6 +30,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -2556,8 +2557,8 @@ public class GosecSpec extends BaseGSpec {
         }
     }
 
-    @Given("^I create user '(.+?)' with password '(.+?)' in LDAP( without sync)?$")
-    public void createUserLdap(String user, String password, String noSync) throws Exception {
+    @Given("^I create user '(.+?)' with password '(.+?)' in LDAP( without sync)?( if the user does not already exist)?$")
+    public void createUserLdap(String user, String password, String noSync, String skipIfExists) throws Exception {
         String template = "###################\n" +
                 "###    USERS    ###\n" +
                 "###################\n" +
@@ -2584,28 +2585,48 @@ public class GosecSpec extends BaseGSpec {
             throw new Exception("Spec only supports keos version >= 0.6");
         }
         k8SSpec.getList("ou_people", "kerberos", "keos-idp", "people_ou", null);
-        template = template.replace("stratio", user).replace("$ou_people", ThreadProperty.get("people_ou")).replace("userPassword: 1234", "userPassword: " + password);
-        writeInFile(template, "ldapuser.template");
-        k8SSpec.copyToRemoteFileWithRetry("target/test-classes/ldapuser.template", "/tmp/ldapuser.template", "ldap-0", "keos-idp", "ldap");
+
+        // Check if the user already exists on LDAP
+        boolean alreadyExists;
         List<List<String>> command = Arrays.asList(
                 Arrays.asList("sh"),
                 Arrays.asList("-c"),
-                Arrays.asList("shtpl < /tmp/ldapuser.template > /tmp/user.ldif")
+                Arrays.asList("source /vault/secrets/idp-secrets ; ldapsearch -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass -b \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"")
         );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
-        command = Arrays.asList(
-                Arrays.asList("sh"),
-                Arrays.asList("-c"),
-                Arrays.asList("source /vault/secrets/idp-secrets ; cat /tmp/user.ldif | ldapadd -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass")
-        );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
-        command = Arrays.asList(
-                Arrays.asList("sh"),
-                Arrays.asList("-c"),
-                Arrays.asList("rm -f /tmp/*.template /tmp/*.ldif")
-        );
-        k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
-        assertThat(ThreadProperty.get("output")).as("Log contains query cancelled").contains("adding new entry \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"");
+        try {
+            k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", "stderr", null, null, null, DataTable.create(command));
+            alreadyExists = ThreadProperty.get("output").contains("result: 0 Success");
+        } catch (Exception e) {
+            alreadyExists = false;
+        }
+        if (skipIfExists != null && alreadyExists) {
+            logger.info("The user already exists, skipping creation...");
+        } else {
+            Assert.assertFalse(alreadyExists, "The user already exists and can't be created again.");
+
+            template = template.replace("stratio", user).replace("$ou_people", ThreadProperty.get("people_ou")).replace("userPassword: 1234", "userPassword: " + password);
+            writeInFile(template, "ldapuser.template");
+            k8SSpec.copyToRemoteFileWithRetry("target/test-classes/ldapuser.template", "/tmp/ldapuser.template", "ldap-0", "keos-idp", "ldap");
+            command = Arrays.asList(
+                    Arrays.asList("sh"),
+                    Arrays.asList("-c"),
+                    Arrays.asList("shtpl < /tmp/ldapuser.template > /tmp/user.ldif")
+            );
+            k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+            command = Arrays.asList(
+                    Arrays.asList("sh"),
+                    Arrays.asList("-c"),
+                    Arrays.asList("source /vault/secrets/idp-secrets ; cat /tmp/user.ldif | ldapadd -H ldaps://ldap.keos-idp -D cn=ldap_admin,$ldap_base_dn -w $ldap_admin_pass")
+            );
+            k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, "output", null, null, null, null, DataTable.create(command));
+            command = Arrays.asList(
+                    Arrays.asList("sh"),
+                    Arrays.asList("-c"),
+                    Arrays.asList("rm -f /tmp/*.template /tmp/*.ldif")
+            );
+            k8SSpec.runCommandInPodDatatable("ldap-0", "keos-idp", "ldap", null, null, null, null, null, null, DataTable.create(command));
+            assertThat(ThreadProperty.get("output")).as("Log contains query cancelled").contains("adding new entry \"uid=" + user + "," + ThreadProperty.get("people_ou") + "\"");
+        }
         if (noSync == null) {
             Thread.sleep(5000);
             runLdapSynchronizerWithRetries("total", 5, 10);
