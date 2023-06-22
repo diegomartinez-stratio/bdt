@@ -16,6 +16,7 @@
 
 package com.stratio.qa.clients.k8s;
 
+import com.auth0.jwt.internal.com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.PathNotFoundException;
 import com.stratio.qa.aspects.RunOnTagAspect;
 import com.stratio.qa.specs.CommandExecutionSpec;
@@ -2099,7 +2100,7 @@ public class KubernetesClient {
         return oMap;
     }
 
-    private void patchMap(Map<String, Object> map, String field, String value, String type, boolean addOrUpdate) {
+    private void patchMap(Map<String, Object> map, String field, String value, String type, boolean addOrUpdate) throws IOException {
         if (addOrUpdate) {
             if (type != null) {
                 if (type.equalsIgnoreCase("integer")) {
@@ -2108,6 +2109,10 @@ public class KubernetesClient {
                     map.put(field, value);
                 } else if (type.equalsIgnoreCase("boolean")) {
                     map.put(field, Boolean.parseBoolean(value));
+                } else if (type.equalsIgnoreCase("json")) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    Map mapValue = mapper.readValue(value, Map.class);
+                    map.put(field, mapValue);
                 }
             } else {
                 map.put(field, value);
