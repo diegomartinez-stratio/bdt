@@ -2584,7 +2584,7 @@ public class GosecSpec extends BaseGSpec {
         if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@skipOnEnv(keosVersion<0.6.0)"))) {
             throw new Exception("Spec only supports keos version >= 0.6");
         }
-        k8SSpec.getList("ou_people", "kerberos", "keos-idp", "people_ou", null);
+        k8SSpec.getKeyFromConfigMap("ou_people", "kerberos", "keos-idp", "people_ou", null);
 
         // Check if the user already exists on LDAP
         boolean alreadyExists;
@@ -2639,7 +2639,7 @@ public class GosecSpec extends BaseGSpec {
         if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@skipOnEnv(keosVersion<0.6.0)"))) {
             throw new Exception("Spec only supports keos version >= 0.6");
         }
-        k8SSpec.getList("ou_people", "kerberos", "keos-idp", "people_ou", null);
+        k8SSpec.getKeyFromConfigMap("ou_people", "kerberos", "keos-idp", "people_ou", null);
         List<List<String>> command = Arrays.asList(
                 Arrays.asList("sh"),
                 Arrays.asList("-c"),
@@ -2698,8 +2698,8 @@ public class GosecSpec extends BaseGSpec {
         if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@skipOnEnv(keosVersion<0.6.0)"))) {
             throw new Exception("Spec only supports keos version >= 0.6");
         }
-        k8SSpec.getList("ou_people", "kerberos", "keos-idp", "people_ou", null);
-        k8SSpec.getList("ou_groups", "kerberos", "keos-idp", "groups_ou", null);
+        k8SSpec.getKeyFromConfigMap("ou_people", "kerberos", "keos-idp", "people_ou", null);
+        k8SSpec.getKeyFromConfigMap("ou_groups", "kerberos", "keos-idp", "groups_ou", null);
         template = template.replace("stratio", group).replace("$ou_people", ThreadProperty.get("people_ou")).replace("uid=uid", "uid=" + user).replace("$ou_groups", ThreadProperty.get("groups_ou"));
         writeInFile(template, "ldapgroup.template");
         k8SSpec.copyToRemoteFileWithRetry("target/test-classes/ldapgroup.template", "/tmp/ldapgroup.template", "ldap-0", "keos-idp", "ldap");
@@ -2734,7 +2734,7 @@ public class GosecSpec extends BaseGSpec {
         if (runOnTagAspect.checkParams(runOnTagAspect.getParams("@skipOnEnv(keosVersion<0.6.0)"))) {
             throw new Exception("Spec only supports keos version >= 0.6");
         }
-        k8SSpec.getList("ou_groups", "kerberos", "keos-idp", "groups_ou", null);
+        k8SSpec.getKeyFromConfigMap("ou_groups", "kerberos", "keos-idp", "groups_ou", null);
         List<List<String>> command = Arrays.asList(
                 Arrays.asList("sh"),
                 Arrays.asList("-c"),

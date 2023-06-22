@@ -800,7 +800,7 @@ public class K8SSpec extends BaseGSpec {
     }
 
     @When("^I get key '(.+?)' in configmap with name '(.+?)' in namespace '(.+?)'( and save it in environment variable '(.*?)')?( and save it in file '(.*?)')?$")
-    public void getList(String key, String configMapName, String namespace, String envVar, String fileName) throws Exception {
+    public void getKeyFromConfigMap(String key, String configMapName, String namespace, String envVar, String fileName) throws Exception {
         String value = this.commonspec.kubernetesClient.getConfigMapKey(configMapName, namespace, key);
         assertThat(value).as("Key doesn't exist in configmap").isNotNull();
         if (envVar != null) {
