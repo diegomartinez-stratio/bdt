@@ -811,23 +811,23 @@ public class K8SSpec extends BaseGSpec {
         }
     }
 
-    @When("^I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)' with path '(.+?)' and value '(.+?)'( as '(.+?)')?( with exit status '(\\d+)')?$")
-    public void executeCRDPatch(String crd, String crdName, String namespace, String path, String value, String type, String sExitStatus) throws Exception {
+    @When("^I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)' with path '(.+?)' and value '(.+?)'( as '(.+?)')?( with exit status '(\\d+)')?( and save the error message in environment variable '(.+?)')?$")
+    public void executeCRDPatch(String crd, String crdName, String namespace, String path, String value, String type, String sExitStatus, String envVar) throws Exception {
         Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         if (exitStatus == null) {
             exitStatus = 0;
         }
-        int response = this.commonspec.kubernetesClient.patchCRD(crd, crdName, namespace, path, value, type);
+        int response = this.commonspec.kubernetesClient.patchCRD(crd, crdName, namespace, path, value, type, envVar);
         Assertions.assertThat(response).isEqualTo(exitStatus);
     }
 
-    @When("^I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)'( with exit status '(\\d+)')? with:$")
-    public void executeCRDPatch(String crd, String crdName, String namespace, String sExitStatus, DataTable modifications) throws Exception {
+    @When("^I patch custom resource '(.+?)' with name '(.+?)' in namespace '(.+?)'( with exit status '(\\d+)')?( and save the error message in environment variable '(.+?)')? with:$")
+    public void executeCRDPatch(String crd, String crdName, String namespace, String sExitStatus, String envVar, DataTable modifications) throws Exception {
         Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         if (exitStatus == null) {
             exitStatus = 0;
         }
-        int response = this.commonspec.kubernetesClient.patchCRDMultipleFields(crd, crdName, namespace, modifications);
+        int response = this.commonspec.kubernetesClient.patchCRDMultipleFields(crd, crdName, namespace, modifications, envVar);
         Assertions.assertThat(response).isEqualTo(exitStatus);
     }
 

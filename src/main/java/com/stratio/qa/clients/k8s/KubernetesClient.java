@@ -2044,9 +2044,10 @@ public class KubernetesClient {
      * @param path
      * @param value
      * @param type      Integer/String/Boolean
+     * @param envVar
      * @return 0 if success and 1 if fails
      **/
-    public int patchCRD(String crdType, String crdName, String namespace, String path, String value, String type) throws Exception {
+    public int patchCRD(String crdType, String crdName, String namespace, String path, String value, String type, String envVar) throws Exception {
         int response = 1;
 
         String[] pathSplitted = path.split("/");
@@ -2074,6 +2075,9 @@ public class KubernetesClient {
                     } catch (KubernetesClientException e) {
                         logger.warn("Error in CRD patch", e);
                         response = 1;
+                        if (envVar != null) {
+                            ThreadProperty.set(envVar, e.getMessage());
+                        }
                     }
                 } else {
                     throw new Exception("Final element is not a map, so we can't patch this value");
@@ -2129,9 +2133,10 @@ public class KubernetesClient {
      * @param crdName
      * @param namespace
      * @param modifications Datatable with 3 columns: Path | Value | Type
+     * @param envVar
      * @return 0 if success and 1 if fails
      **/
-    public int patchCRDMultipleFields(String crdType, String crdName, String namespace, DataTable modifications) throws Exception {
+    public int patchCRDMultipleFields(String crdType, String crdName, String namespace, DataTable modifications, String envVar) throws Exception {
         int response = 1;
         CustomResourceDefinition crd = k8sClient.apiextensions().v1().customResourceDefinitions().withName(crdType).get();
         if (crd == null) {
@@ -2174,6 +2179,9 @@ public class KubernetesClient {
                 } catch (KubernetesClientException e) {
                     logger.warn("Error in CRD patch", e);
                     response = 1;
+                    if (envVar != null) {
+                        ThreadProperty.set(envVar, e.getMessage());
+                    }
                 }
             }
         }
