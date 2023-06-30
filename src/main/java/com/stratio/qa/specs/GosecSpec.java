@@ -1464,7 +1464,7 @@ public class GosecSpec extends BaseGSpec {
                 }
 
                 // Send POST request
-                sendIdentitiesPostRequest("user", userName, data, newEndPoint);
+                sendIdentitiesPostRequest("user", userName, data, newEndPoint, type);
 
             } else {
                 if (doesNotExist) {
@@ -1525,10 +1525,10 @@ public class GosecSpec extends BaseGSpec {
             restSpec.sendRequestNoDataTable("GET", endPointResource, null, null, null);
             if (commonspec.getResponse().getStatusCode() != 200) {
                 // Send POST request
-                sendIdentitiesPostRequest("user", userName, data, endPoint);
+                sendIdentitiesPostRequest("user", userName, data, endPoint, type);
             } else {
                 if (doesNotExist) {
-                    commonspec.getLogger().warn("Custom user:{} already exist", userName);
+                    commonspec.getLogger().warn("{} user:{} already exist", type, userName);
                 } else {
                     // Delete user and send the request again
                     deleteResourceIfExistsKeos("user", userName, tenantOrig, tenantLoginInfo, endPoint, null);
@@ -1637,11 +1637,11 @@ public class GosecSpec extends BaseGSpec {
                 }
 
                 // Send POST request
-                sendIdentitiesPostRequest("group", groupName, data, newEndPoint);
+                sendIdentitiesPostRequest("group", groupName, data, newEndPoint, type);
 
             } else {
                 if (doesNotExist) {
-                    commonspec.getLogger().warn("Custom group:{} already exist", groupName);
+                    commonspec.getLogger().warn("{} group:{} already exist", type, groupName);
                 } else {
                     // Delete group and send the request again
                     deleteResourceIfExistsDcos("group", groupName, tenantOrig, tenantLoginInfo, endPoint, null);
@@ -1694,7 +1694,7 @@ public class GosecSpec extends BaseGSpec {
             restSpec.sendRequestNoDataTable("GET", endPointResource, null, null, null);
             if (commonspec.getResponse().getStatusCode() != 200) {
                 // Send POST request
-                sendIdentitiesPostRequest("group", groupName, data, endPoint);
+                sendIdentitiesPostRequest("group", groupName, data, endPoint, type);
             } else {
                 if (doesNotExist) {
                     commonspec.getLogger().warn("Custom group:{} already exist", groupName);
@@ -1866,7 +1866,7 @@ public class GosecSpec extends BaseGSpec {
         return data;
     }
 
-    private void sendIdentitiesPostRequest(String resource, String resourceName, String data, String newEndPoint) throws
+    private void sendIdentitiesPostRequest(String resource, String resourceName, String data, String newEndPoint, String type) throws
             Exception {
         Integer expectedStatusCreate = 201;
         commonspec.getLogger().warn("Json for POST request---> {}", data);
@@ -1875,18 +1875,18 @@ public class GosecSpec extends BaseGSpec {
 
         try {
             if (commonspec.getResponse().getStatusCode() == 409) {
-                commonspec.getLogger().warn("The custom {} {} already exists", resource, resourceName);
+                commonspec.getLogger().warn("The {} {} {} already exists", type, resource, resourceName);
             } else {
                 try {
                     assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(expectedStatusCreate);
                 } catch (AssertionError e) {
-                    commonspec.getLogger().warn("Error creating custom {} {}: {}", resource, resourceName, commonspec.getResponse().getResponse());
+                    commonspec.getLogger().warn("Error creating {} {} {}: {}", type, resource, resourceName, commonspec.getResponse().getResponse());
                     throw e;
                 }
-                commonspec.getLogger().warn("Custom {} {} created", resource, resourceName);
+                commonspec.getLogger().warn("{} {} {} created", type, resource, resourceName);
             }
         } catch (Exception e) {
-            commonspec.getLogger().warn("Error creating custom {} {}: {}", resource, resourceName, commonspec.getResponse().getResponse());
+            commonspec.getLogger().warn("Error creating {} {} {}: {}", type, resource, resourceName, commonspec.getResponse().getResponse());
             throw e;
         }
     }
