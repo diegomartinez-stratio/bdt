@@ -429,7 +429,7 @@ public class KubernetesClient {
             obtainJSONInfoAndExpose(commonspec, centralConfigJson, "$.globals.kerberos.kadminHost", "KADMIN_HOST", null);
             obtainJSONInfoAndExpose(commonspec, centralConfigJson, "$.globals.kerberos.kadminPort", "KADMIN_PORT", null);
 
-            obtainJSONInfoAndExpose(commonspec, centralConfigJson, "$.globals.ldap.adminUserUuid", "KEOS_USER", null);
+            obtainJSONInfoAndExpose(commonspec, centralConfigJson, "$.globals.ldap.adminUserUuid", "KEOS_USER_UID", null);
             obtainJSONInfoAndExpose(commonspec, centralConfigJson, "$.globals.ldap.url", "LDAP_URL", null);
             obtainJSONInfoAndExpose(commonspec, centralConfigJson, "$.globals.ldap.port", "LDAP_PORT", null);
             obtainJSONInfoAndExpose(commonspec, centralConfigJson, "$.globals.ldap.userDn", "LDAP_USER_DN", null);
@@ -441,6 +441,9 @@ public class KubernetesClient {
 
             // TODO ARTIFACT_REPOSITORY doesn't appear in configmap, set default value
             ThreadProperty.set("ARTIFACT_REPOSITORY", System.getProperty("ARTIFACT_REPOSITORY") != null ? System.getProperty("ARTIFACT_REPOSITORY") : "http://qa.int.stratio.com/repository");
+
+            ThreadProperty.set("KEOS_USER_REALM", Objects.requireNonNullElse(System.getProperty("KEOS_USER_REALM"), "INTERNAL"));
+            ThreadProperty.set("KEOS_USER", ThreadProperty.get("KEOS_USER_UID").replace("-" + ThreadProperty.get("KEOS_USER_REALM").toLowerCase(), ""));
         } catch (Exception e) {
             commonspec.getLogger().error("Error reading command center config", e);
         }
