@@ -792,7 +792,7 @@ public class GosecSpec extends BaseGSpec {
                             if (commonspec.getResponse().getResponse().contains("\"" + uidOrGid + "\":\"" + stratioIdentity + "\"")) {
                                 includeResourceInTenant(resource, stratioIdentity, tenantId);
                             } else {
-                                throw new Exception(resource + " " + stratioIdentity + " doesn't exist in Gosec");
+                                throw new Exception(resource + " " + resourceId + " nor " + stratioIdentity + " exist in Gosec");
                             }
                         }
                     } else {
@@ -1357,7 +1357,7 @@ public class GosecSpec extends BaseGSpec {
                             if (commonspec.getResponse().getResponse().contains("\"" + uidOrGid + "\":\"" + stratioIdentity + "\"")) {
                                 removeResourceInTenant(resource, stratioIdentity, tenantId);
                             } else {
-                                throw new Exception(resource + " " + stratioIdentity + " doesn't exist in Gosec");
+                                throw new Exception(resource + " " + resourceId + " nor " + stratioIdentity + " exist in Gosec");
                             }
                         }
                     } else {
@@ -2093,7 +2093,7 @@ public class GosecSpec extends BaseGSpec {
                             if (commonspec.getResponse().getResponse().contains("\"" + uidOrGid + "\":\"" + stratioIdentity + "\"")) {
                                 includeResourceInRole(resource, stratioIdentity, roleName, tenantId);
                             } else {
-                                throw new Exception(resource + " " + stratioIdentity + " doesn't exist in Gosec");
+                                throw new Exception(resource + " " + resourceId + " nor " + stratioIdentity + " exist in Gosec");
                             }
                         }
                     } else {
@@ -2323,7 +2323,7 @@ public class GosecSpec extends BaseGSpec {
                             if (commonspec.getResponse().getResponse().contains("\"" + uidOrGid + "\":\"" + stratioIdentity + "\"")) {
                                 deleteResourceInRole(resource, stratioIdentity, roleName, tenantId);
                             } else {
-                                throw new Exception(resource + " " + stratioIdentity + " doesn't exist in Gosec");
+                                throw new Exception(resource + " " + resourceId + " nor " + stratioIdentity + " exist in Gosec");
                             }
                         }
                     } else {
