@@ -167,9 +167,15 @@ public class GosecSSOUtils {
     private void postToLoginToAcceptTyC(HttpClient client, HttpResponse secondResponse, URI redirect, HttpClientContext context) throws IOException {
         Document doc = Jsoup.parse(getStringFromIS(secondResponse.getEntity().getContent()));
         String executionCode = doc.select("[name=execution]").attr("value");
+        String eventId = doc.select("[name=_eventId]").attr("value");
         List<NameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("_eventId", "submit"));
-        params.add(new BasicNameValuePair("submit", "Accept"));
+        if (eventId.equalsIgnoreCase("proceed")) {
+            params.add(new BasicNameValuePair("_eventId", "proceed"));
+            params.add(new BasicNameValuePair("continue", "Continue"));
+        } else {
+            params.add(new BasicNameValuePair("_eventId", "submit"));
+            params.add(new BasicNameValuePair("submit", "Accept"));
+        }
         params.add(new BasicNameValuePair("execution", executionCode));
         HttpPost httpPost = new HttpPost(redirect);
         httpPost.setEntity(new UrlEncodedFormEntity(params));
