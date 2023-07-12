@@ -2865,13 +2865,23 @@ public class CCTSpec extends BaseGSpec {
         Assertions.assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(200);
     }
 
-    @Given("^I create namespace with name '(.+?)' in tenant '(.+?)' through CCT$")
-    public void createNamespace(String namespace, String tenantName) throws Exception {
+    @Given("^I create namespace with name '(.+?)' in tenant '(.+?)' through CCT( if it does not already exist)?$")
+    public void createNamespace(String namespace, String tenantName, String skipIfPresent) throws Exception {
         commonspec.setCCTConnection(null, null);
-        String endPoint = ThreadProperty.get("KEOS_CCT_PAAS_INGRESS_PATH") + "/v1/namespace";
-        Future<Response> response = commonspec.generateRequest("POST", true, null, null, endPoint, "name=" + namespace.replaceAll(tenantName + "-", "") + "&tenant=" + tenantName, "string");
-        commonspec.setResponse("POST", response.get());
-        Assertions.assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(200);
+        Future<Response> response;
+        String endpoint = ThreadProperty.get("KEOS_CCT_PAAS_INGRESS_PATH") + "/v1/namespace";
+        String detailsEndpoint = String.format("%s/%s", endpoint, namespace);
+
+        // Look for namespace in CCT
+        response = commonspec.generateRequest("GET", true, null, null, detailsEndpoint, null, "json");
+        commonspec.setResponse("GET", response.get());
+
+        // Create namespace in CCT
+        if (skipIfPresent == null || commonspec.getResponse().getStatusCode() != 200) {
+            response = commonspec.generateRequest("POST", true, null, null, endpoint, "name=" + namespace.replaceAll(tenantName + "-", "") + "&tenant=" + tenantName, "string");
+            commonspec.setResponse("POST", response.get());
+            Assertions.assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(200);
+        }
     }
 
     private void getCCTOrchestratorVersion() {
