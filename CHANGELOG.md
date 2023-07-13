@@ -13,6 +13,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [GS-7650] Get profile structure Id from given name
 * [SAAS-6968] Upgrade to Cypress 10.11.0
 * [DGPB-11154] Add support to install a descriptor without type key in a property
+* [ROCK-10735] Changes for GoveranceRequest with k8s 0.9.0 - Header "X-Userid" with ldap changes 
 
 ## Previous development
 
