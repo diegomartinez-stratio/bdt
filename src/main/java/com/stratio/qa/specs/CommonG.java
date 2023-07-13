@@ -1152,11 +1152,11 @@ public class CommonG {
         Realm realm = null;
         String govTenant = System.getProperty("GOV_TENANT") != null ? System.getProperty("GOV_TENANT") : "NONE";
         String govRolesID = System.getProperty("GOV_ROLESID");
-        String govUserID = System.getProperty("GOV_USERID") != null ? System.getProperty("GOV_USERID") : "admin";
+        String govUserID = Objects.requireNonNullElse(ThreadProperty.get("GOV_USER_UID"),
+                           Objects.requireNonNullElse(System.getProperty("GOV_SERVICE_USERID"), "admin"));
 
         if ("servicegov".equals(type)) {
             govRolesID = System.getProperty("GOV_SERVICE_ROLESID") != null ? System.getProperty("GOV_SERVICE_ROLESID") : "Service";
-            govUserID = System.getProperty("GOV_SERVICE_USERID") != null ? System.getProperty("GOV_SERVICE_USERID") : "admin";
             type = "gov";
         }
 
